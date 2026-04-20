@@ -15,7 +15,9 @@ interface Course {
   name: string;
   creditHours: number;
   level: number;
+  departmentId?: string;
   department: {
+    id?: string;
     name: string;
   };
 }
