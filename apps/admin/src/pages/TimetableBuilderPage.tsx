@@ -27,14 +27,33 @@ interface DepartmentOption {
   schoolName: string;
 }
 
+interface School {
+  id: string;
+  name: string;
+  colleges: College[];
+}
+
+interface College {
+  id: string;
+  name: string;
+  departments: any[];
+}
+
 export function TimetableBuilderPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [timetable, setTimetable] = useState<any[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState("");
+  
+  // Filter states
+  const [filterSchoolId, setFilterSchoolId] = useState("");
+  const [filterCollegeId, setFilterCollegeId] = useState("");
+  const [filterDepartmentId, setFilterDepartmentId] = useState("");
+  
   const [courseForm, setCourseForm] = useState({
     departmentId: "",
     code: "",
@@ -71,6 +90,8 @@ export function TimetableBuilderPage() {
           : [];
       setCourses(normalizedCourses);
       setTimetable(timetableRes.data || []);
+      setSchools(schoolsRes.data || []);
+      
       const normalizedDepartments: DepartmentOption[] = (schoolsRes.data || []).flatMap((school: any) =>
         (school.colleges || []).flatMap((college: any) =>
           (college.departments || []).map((department: any) => ({
@@ -90,6 +111,35 @@ export function TimetableBuilderPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Get colleges for selected school
+  const getCollegesForSchool = () => {
+    if (!filterSchoolId) return [];
+    const school = schools.find(s => s.id === filterSchoolId);
+    return school?.colleges || [];
+  };
+
+  // Get departments for selected college
+  const getDepartmentsForCollege = () => {
+    if (!filterCollegeId) return [];
+    const colleges = getCollegesForSchool();
+    const college = colleges.find(c => c.id === filterCollegeId);
+    return college?.departments || [];
+  };
+
+  // Filter courses based on selected department
+  const getFilteredCourses = () => {
+    if (!filterDepartmentId) return courses;
+    return courses.filter(c => c.departmentId === filterDepartmentId || c.department?.id === filterDepartmentId);
+  };
+
+  // Filter timetable based on selected department and courses
+  const getFilteredTimetable = () => {
+    if (!filterDepartmentId) return timetable;
+    const filteredCourses = getFilteredCourses();
+    const courseIds = filteredCourses.map(c => c.id);
+    return timetable.filter(t => courseIds.includes(t.courseId));
   };
 
   const handleCreateCourse = async (e: React.FormEvent) => {
@@ -185,6 +235,91 @@ export function TimetableBuilderPage() {
           </Button>
         </div>
       </div>
+
+      {/* Filter Section */}
+      <Card className="border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30">
+        <CardHeader>
+          <CardTitle className="text-lg">Filter by Institution</CardTitle>
+          <CardDescription>Narrow down courses and timetables by school, college, and department</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="filterSchool">School</Label>
+              <Select
+                id="filterSchool"
+                value={filterSchoolId}
+                onChange={(e) => {
+                  setFilterSchoolId(e.target.value);
+                  setFilterCollegeId("");
+                  setFilterDepartmentId("");
+                }}
+                className="mt-2"
+              >
+                <option value="">All Schools</option>
+                {schools.map((school) => (
+                  <option key={school.id} value={school.id}>
+                    {school.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="filterCollege">College</Label>
+              <Select
+                id="filterCollege"
+                value={filterCollegeId}
+                onChange={(e) => {
+                  setFilterCollegeId(e.target.value);
+                  setFilterDepartmentId("");
+                }}
+                disabled={!filterSchoolId}
+                className="mt-2"
+              >
+                <option value="">All Colleges</option>
+                {getCollegesForSchool().map((college) => (
+                  <option key={college.id} value={college.id}>
+                    {college.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="filterDepartment">Department</Label>
+              <Select
+                id="filterDepartment"
+                value={filterDepartmentId}
+                onChange={(e) => setFilterDepartmentId(e.target.value)}
+                disabled={!filterCollegeId}
+                className="mt-2"
+              >
+                <option value="">All Departments</option>
+                {getDepartmentsForCollege().map((dept: any) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+          
+          {(filterSchoolId || filterCollegeId || filterDepartmentId) && (
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => {
+                setFilterSchoolId("");
+                setFilterCollegeId("");
+                setFilterDepartmentId("");
+              }}
+            >
+              Clear Filters
+            </Button>
+          )}
+        </CardContent>
+      </Card>
 
       {showCourseForm && (
         <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
@@ -289,7 +424,7 @@ export function TimetableBuilderPage() {
                   className="mt-2"
                 >
                   <option value="">Select a course...</option>
-                  {courses.map((course) => (
+                  {getFilteredCourses().map((course) => (
                     <option key={course.id} value={course.id}>
                       {course.code} - {course.name}
                     </option>
@@ -375,16 +510,19 @@ export function TimetableBuilderPage() {
       {/* Timetable Display */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Class Schedules</CardTitle>
+          <CardTitle className="text-lg">
+            Class Schedules
+            {filterDepartmentId && <span className="text-sm font-normal text-slate-600"> (Filtered)</span>}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center h-32">
               <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
             </div>
-          ) : timetable.length === 0 ? (
+          ) : getFilteredTimetable().length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-slate-600 dark:text-slate-400">No schedules created yet</p>
+              <p className="text-slate-600 dark:text-slate-400">No schedules found{filterDepartmentId && " for selected department"}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -400,7 +538,7 @@ export function TimetableBuilderPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {timetable.map((entry: any) => (
+                  {getFilteredTimetable().map((entry: any) => (
                     <TableRow key={entry.id}>
                       <TableCell className="font-medium">
                         <Badge variant="secondary">{entry.course.code}</Badge>

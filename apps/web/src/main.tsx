@@ -6,7 +6,6 @@ import { App } from "@/App";
 import { queryClient } from "@/queries/queryClient";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthBootstrap } from "@/hooks/useAuth";
-import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { useRealtimeDataSync } from "@/hooks/useRealtimeDataSync";
 import { ToastHost } from "@/components/ui/Toast";
 import "@/styles.css";
@@ -41,7 +40,6 @@ void removeStaleServiceWorkersOnce();
 function Bootstrap() {
   useTheme();
   useAuthBootstrap();
-  useOfflineSync();
   useRealtimeDataSync();
   return (
     <>
