@@ -82,7 +82,54 @@ EOF
 sudo tee /etc/nginx/sites-available/campuslab >/dev/null <<'EOF'
 server {
   listen 80;
+  listen [::]:80;
+  server_name campuslabs.duckdns.org;
+
+  location /.well-known/acme-challenge/ {
+    root /var/www/html;
+  }
+
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 80;
+  listen [::]:80;
   server_name _;
+
+  root /var/www/campuslab/pwa;
+  index index.html;
+
+  location /api/ {
+    proxy_pass http://127.0.0.1:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+  }
+
+  location /admin/ {
+    alias /var/www/campuslab/admin/;
+    try_files $uri $uri/ /admin/index.html;
+  }
+
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}
+
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+  server_name campuslabs.duckdns.org;
+
+  ssl_certificate /etc/letsencrypt/live/campuslabs.duckdns.org/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/campuslabs.duckdns.org/privkey.pem;
+  include /etc/letsencrypt/options-ssl-nginx.conf;
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
   root /var/www/campuslab/pwa;
   index index.html;
