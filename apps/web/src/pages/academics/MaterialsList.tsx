@@ -29,6 +29,7 @@ export function MaterialsList() {
   const { data } = useMaterialsQuery(filter);
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
+  const departmentName = typeof user?.department === "string" ? user.department : user?.department?.name;
 
   const items = Array.isArray(data) && data.length ? data : [
     { id: "1", type: "pdf", title: "Fluid Mechanics", courseCode: "MTH 301", date: "Today" },
@@ -198,7 +199,7 @@ export function MaterialsList() {
             </div>
 
             <p className="text-xs text-mid-gray">
-              Material will be uploaded under your department {user?.department?.name} and pending admin approval.
+              Material will be uploaded under your department {departmentName || ""} and pending admin approval.
             </p>
           </form>
         </Card>
