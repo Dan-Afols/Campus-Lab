@@ -12,7 +12,6 @@ const RegisterScreen = lazy(() => import("@/pages/Register").then((m) => ({ defa
 const EmailVerification = lazy(() => import("@/pages/EmailVerification").then((m) => ({ default: m.EmailVerification })));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword").then((m) => ({ default: m.ForgotPassword })));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword").then((m) => ({ default: m.ResetPassword })));
-const OfflineFallback = lazy(() => import("@/pages/OfflineFallback").then((m) => ({ default: m.OfflineFallback })));
 
 const Dashboard = lazy(() => import("@/pages/Dashboard").then((m) => ({ default: m.Dashboard })));
 const NewsFeed = lazy(() => import("@/pages/NewsFeed").then((m) => ({ default: m.NewsFeed })));
@@ -61,7 +60,6 @@ function RouteShell() {
           <Route path="/verify-email" element={<EmailVerification />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/offline" element={<OfflineFallback />} />
 
           <Route element={<AuthGuard />}>
             <Route element={<AppLayout />}>
