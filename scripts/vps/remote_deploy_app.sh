@@ -51,7 +51,7 @@ Wants=postgresql.service redis-server.service
 [Service]
 Type=simple
 WorkingDirectory=/opt/campus-lab/services/api
-ExecStart=/usr/bin/node /opt/campus-lab/services/api/dist/server.js
+ExecStart=/usr/bin/node /opt/campus-lab/services/api/dist/src/server.js
 Restart=always
 RestartSec=5
 User=ubuntu
