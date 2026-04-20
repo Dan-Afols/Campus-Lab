@@ -23,7 +23,7 @@ export function LoginScreen() {
   const redirect = new URLSearchParams(location.search).get("redirect") || "/dashboard";
 
   const form = useForm<LoginValues>({
-    defaultValues: { email: "student@campuslab.app", password: "Student@123" }
+    defaultValues: { email: "", password: "" }
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -53,8 +53,8 @@ export function LoginScreen() {
       <Card className="mt-4 w-full max-w-md">
         <form className="mt-4 space-y-3" onSubmit={onSubmit} noValidate>
           {successMessage ? <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-body-sm text-emerald-700">{successMessage}</div> : null}
-          <Input label="Email" type="email" {...form.register("email")} />
-          <Input label="Password" type="password" {...form.register("password")} />
+          <Input label="Email" type="email" autoComplete="username" placeholder="you@university.edu" {...form.register("email")} />
+          <Input label="Password" type="password" autoComplete="current-password" placeholder="Enter your password" {...form.register("password")} />
           {error ? <p className="text-body-sm text-coral">{error}</p> : null}
           <Button type="submit" className="w-full" loading={mutation.isPending}>
             Sign In
