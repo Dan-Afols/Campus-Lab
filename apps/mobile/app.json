@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Campus Lab",
+    "slug": "campus-lab",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "campuslab",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0A1628"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.campuslab.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "41560fe5-ee4e-4773-85ee-f8f9193030f8"
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+### Public health check
+GET http://localhost:4000/api/v1/health
+ngrok-skip-browser-warning: true
+
+### Config discovery
+GET http://localhost:4000/api/config
+ngrok-skip-browser-warning: true
+
+### Register a student
+POST http://localhost:4000/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Test Student",
+  "email": "teststudent@test.com",
+  "password": "TestPass123!",
+  "matricNumber": "ENG/300/001",
+  "phoneNumber": "08012345678",
+  "dateOfBirth": "2000-01-15",
+  "gender": "MALE",
+  "schoolId": "SCHOOL_ID",
+  "collegeId": "COLLEGE_ID",
+  "departmentId": "DEPARTMENT_ID",
+  "departmentLevelId": "LEVEL_ID",
+  "role": "STUDENT",
+  "emergencyContactName": "Parent Name",
+  "emergencyContactPhone": "08099999999"
+}
+
+### Login
+POST http://localhost:4000/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "seed@test.com",
+  "password": "Seed123!",
+  "deviceId": "rest-client",
+  "os": "Windows",
+  "platform": "web"
+}
+
+### Current user
+GET http://localhost:4000/api/v1/users/me
+Authorization: Bearer {{accessToken}}

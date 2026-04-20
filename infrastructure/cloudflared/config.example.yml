@@ -1,0 +1,7 @@
+tunnel: campus-lab
+credentials-file: C:\Users\HomePC\.cloudflared\campus-lab.json
+
+ingress:
+  - hostname: campus-lab-api.example.com
+    service: http://localhost:4000
+  - service: http_status:404

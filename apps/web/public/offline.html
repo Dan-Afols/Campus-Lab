@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Lab Offline</title>
+  <style>
+    body{margin:0;font-family:Inter,system-ui,sans-serif;background:#0A1628;color:#F8FAFC;display:grid;min-height:100vh;place-items:center}
+    .card{max-width:420px;padding:28px;border-radius:20px;background:#111827;border:1px solid #1F2937;text-align:center}
+    .badge{display:inline-block;padding:6px 12px;border-radius:999px;background:#F39C1220;color:#F39C12;margin-bottom:12px}
+    button{margin-top:14px;padding:12px 16px;border:0;border-radius:12px;background:#4A90E2;color:white;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">Campus Lab</div>
+    <h1>You're offline</h1>
+    <p>Cached content is still available. Reconnect to sync updates and actions.</p>
+    <button onclick="location.reload()">Try Again</button>
+  </div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+name: Campus Lab CI/CD
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build API
+        run: npm --workspace services/api run build
+
+      - name: Typecheck Web
+        run: npm --workspace apps/web run typecheck
+
+      - name: Build Web
+        run: npm --workspace apps/web run build
+
+      - name: Typecheck Mobile
+        run: npm --workspace apps/mobile run typecheck
+
+      - name: Lighthouse CI
+        run: |
+          npm --workspace apps/web run preview &
+          npx wait-on http://localhost:4174
+          npm --workspace apps/web run lighthouse
+
+      - name: Prisma format check
+        run: npx prisma format --schema services/api/prisma/schema.prisma
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy placeholder
+        run: echo "Configure SSH deployment to VPS here"

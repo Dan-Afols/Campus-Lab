@@ -1,0 +1,533 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  COURSE_REP
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  LOCKED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum NotificationType {
+  MATERIAL
+  PAST_QUESTION
+  TIMETABLE
+  NEWS
+  HOSTEL
+  HEALTH
+  CLASS_REMINDER
+}
+
+enum MaterialType {
+  PDF
+  DOC
+  DOCX
+  MP4
+  MP3
+  WAV
+  YOUTUBE
+}
+
+enum BedStatus {
+  AVAILABLE
+  HELD
+  BOOKED
+}
+
+enum NewsCategory {
+  ACADEMIC
+  EVENTS
+  URGENT_ALERTS
+  SPORTS
+  ADMINISTRATION
+}
+
+enum ExpenseCategory {
+  FOOD
+  TRANSPORT
+  BOOKS
+  UTILITIES
+  ENTERTAINMENT
+  HEALTH
+  OTHER
+}
+
+model School {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  colleges  College[]
+  users     User[]
+  newsPosts NewsPost[]
+  createdAt DateTime  @default(now())
+}
+
+model College {
+  id           String       @id @default(cuid())
+  name         String
+  schoolId     String
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  departments  Department[]
+  users        User[]
+  timetables   Timetable[]
+  newsTargets  NewsTarget[]
+  createdAt    DateTime     @default(now())
+
+  @@unique([schoolId, name])
+}
+
+model Department {
+  id            String          @id @default(cuid())
+  name          String
+  collegeId     String
+  college       College         @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  courses       Course[]
+  users         User[]
+  levels        DepartmentLevel[]
+  materials     Material[]
+  pastQuestions PastQuestion[]
+  hostels       Hostel[]
+  newsTargets   NewsTarget[]
+  timetables    Timetable[]
+  createdAt     DateTime        @default(now())
+
+  @@unique([collegeId, name])
+}
+
+model DepartmentLevel {
+  id           String       @id @default(cuid())
+  departmentId String
+  department   Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  level        Int
+  users        User[]
+  materials    Material[]
+  timetables   Timetable[]
+  newsTargets  NewsTarget[]
+  createdAt    DateTime     @default(now())
+
+  @@unique([departmentId, level])
+}
+
+model User {
+  id                       String          @id @default(cuid())
+  fullName                 String
+  email                    String          @unique
+  passwordHash             String
+  matricNumberEncrypted    String
+  phoneNumber              String
+  dobEncrypted             String
+  gender                   Gender
+  role                     UserRole        @default(STUDENT)
+  status                   UserStatus      @default(PENDING)
+  schoolId                 String
+  collegeId                String
+  departmentId             String
+  departmentLevelId        String
+  emergencyContactName     String
+  emergencyContactPhone    String
+  profilePhotoUrl          String?
+  emailVerifiedAt          DateTime?
+  failedLoginAttempts      Int             @default(0)
+  lockUntil                DateTime?
+  allowCoursemateLocator   Boolean         @default(true)
+  stepGoal                 Int             @default(8000)
+  waterGoalCups            Int             @default(8)
+  bodyWeightKg             Float?
+  twoFactorEnabled         Boolean         @default(false)
+  twoFactorSecretEncrypted String?
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+
+  school                   School          @relation(fields: [schoolId], references: [id])
+  college                  College         @relation(fields: [collegeId], references: [id])
+  department               Department      @relation(fields: [departmentId], references: [id])
+  departmentLevel          DepartmentLevel @relation(fields: [departmentLevelId], references: [id])
+  sessions                 Session[]
+  otpCodes                 OtpCode[]
+  notificationPrefs        NotificationPreference[]
+  notifications            Notification[]
+  deviceTokens             DeviceToken[]
+  materialsUploaded        Material[]      @relation("materialUploader")
+  bookings                 HostelBooking[]
+  expenses                 Expense[]
+  savingsGoals             SavingsGoal[]
+  savingsDeposits          SavingsDeposit[]
+  hydrationLogs            HydrationLog[]
+  sleepLogs                SleepLog[]
+  stepLogs                 StepLog[]
+  bookmarkedNews           BookmarkedNews[]
+  bookmarkedMaterials      BookmarkedMaterial[]
+  materialRatings          MaterialRating[]
+  auditLogs                AuditLog[]
+  pastQuestionsUploaded    PastQuestion[]
+  newsPosts                NewsPost[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshTokenHash String @unique
+  deviceId      String
+  os            String
+  ipAddress     String?
+  userAgent     String?
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([deviceId])
+}
+
+model DeviceToken {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  platform   String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+}
+
+model OtpCode {
+  id         String   @id @default(cuid())
+  userId     String
+  purpose    String
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+}
+
+model NotificationPreference {
+  id                String   @id @default(cuid())
+  userId             String
+  material           Boolean  @default(true)
+  pastQuestion       Boolean  @default(true)
+  timetable          Boolean  @default(true)
+  news               Boolean  @default(true)
+  hostel             Boolean  @default(true)
+  health             Boolean  @default(true)
+  classReminder      Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId       String
+  type         NotificationType
+  title        String
+  body         String
+  payload      Json?
+  readAt       DateTime?
+  createdAt    DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Course {
+  id           String       @id @default(cuid())
+  code         String
+  title        String
+  departmentId String
+  department   Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  materials    Material[]
+  timetables   Timetable[]
+
+  @@unique([departmentId, code])
+}
+
+model Timetable {
+  id                String          @id @default(cuid())
+  collegeId         String
+  departmentId      String
+  departmentLevelId String
+  courseId          String
+  dayOfWeek         Int
+  startsAt          String
+  endsAt            String
+  venue             String
+  lecturer          String
+  colorHex          String?
+  createdAt         DateTime        @default(now())
+
+  college           College         @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  department        Department      @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  departmentLevel   DepartmentLevel @relation(fields: [departmentLevelId], references: [id], onDelete: Cascade)
+  course            Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Material {
+  id                String          @id @default(cuid())
+  title             String
+  description       String
+  type              MaterialType
+  courseId          String
+  departmentId      String
+  departmentLevelId String
+  uploadedById      String
+  fileUrl           String
+  externalSourceUrl String?
+  aiSummary         String?
+  isExternal        Boolean         @default(false)
+  approvedByAdmin   Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+
+  course            Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  department        Department      @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  departmentLevel   DepartmentLevel @relation(fields: [departmentLevelId], references: [id], onDelete: Cascade)
+  uploadedBy        User            @relation("materialUploader", fields: [uploadedById], references: [id], onDelete: Cascade)
+  ratings           MaterialRating[]
+  bookmarks         BookmarkedMaterial[]
+}
+
+model MaterialRating {
+  id         String   @id @default(cuid())
+  materialId String
+  userId     String
+  rating     Int
+  createdAt  DateTime @default(now())
+
+  material Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([materialId, userId])
+}
+
+model BookmarkedMaterial {
+  id         String   @id @default(cuid())
+  materialId String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  material Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([materialId, userId])
+}
+
+model PastQuestion {
+  id           String   @id @default(cuid())
+  departmentId String
+  courseCode   String
+  year         Int
+  fileUrl      String
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  uploadedBy User       @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+}
+
+model NewsPost {
+  id           String        @id @default(cuid())
+  title        String
+  body         String
+  category     NewsCategory
+  imageUrl     String?
+  isPinned     Boolean       @default(false)
+  isUrgent     Boolean       @default(false)
+  isGlobal     Boolean       @default(false)
+  createdById  String
+  schoolId     String
+  createdAt    DateTime      @default(now())
+
+  creator      User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  school       School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  targets      NewsTarget[]
+  bookmarks    BookmarkedNews[]
+}
+
+model NewsTarget {
+  id                String          @id @default(cuid())
+  newsPostId        String
+  collegeId         String?
+  departmentId      String?
+  departmentLevelId String?
+
+  newsPost          NewsPost        @relation(fields: [newsPostId], references: [id], onDelete: Cascade)
+  college           College?        @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  department        Department?     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  departmentLevel   DepartmentLevel?@relation(fields: [departmentLevelId], references: [id], onDelete: Cascade)
+}
+
+model BookmarkedNews {
+  id         String   @id @default(cuid())
+  newsPostId String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  newsPost NewsPost @relation(fields: [newsPostId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([newsPostId, userId])
+}
+
+model Hostel {
+  id            String      @id @default(cuid())
+  name          String      @unique
+  gender        Gender
+  totalBeds     Int
+  availableBeds Int
+  distanceKm    Float
+  departmentId  String?
+  rooms         HostelRoom[]
+
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+}
+
+model HostelRoom {
+  id        String      @id @default(cuid())
+  hostelId  String
+  floor     Int
+  roomLabel String
+  beds      HostelBed[]
+
+  hostel Hostel @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+
+  @@unique([hostelId, floor, roomLabel])
+}
+
+model HostelBed {
+  id             String           @id @default(cuid())
+  roomId          String
+  bedNumber       String
+  status          BedStatus       @default(AVAILABLE)
+  heldUntil       DateTime?
+  currentBookingId String?
+
+  room           HostelRoom       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  bookings       HostelBooking[]
+
+  @@unique([roomId, bedNumber])
+}
+
+model HostelBooking {
+  id          String   @id @default(cuid())
+  userId       String
+  bedId        String
+  moveInDate   DateTime
+  cancelledAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bed  HostelBed @relation(fields: [bedId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  userId       String
+  amount       Float
+  category     ExpenseCategory
+  description  String
+  spentAt      DateTime
+  receiptUrl   String?
+  createdAt    DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, spentAt])
+}
+
+model SavingsGoal {
+  id            String           @id @default(cuid())
+  userId         String
+  goalName       String
+  targetAmount   Float
+  targetDate     DateTime
+  createdAt      DateTime         @default(now())
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deposits       SavingsDeposit[]
+}
+
+model SavingsDeposit {
+  id            String   @id @default(cuid())
+  userId         String
+  savingsGoalId  String
+  amount         Float
+  depositedAt    DateTime
+  createdAt      DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savingsGoal SavingsGoal @relation(fields: [savingsGoalId], references: [id], onDelete: Cascade)
+}
+
+model HydrationLog {
+  id          String   @id @default(cuid())
+  userId       String
+  cups         Int
+  loggedAt     DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SleepLog {
+  id           String   @id @default(cuid())
+  userId        String
+  sleptAt       DateTime
+  wokeAt        DateTime
+  qualityRating Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StepLog {
+  id          String   @id @default(cuid())
+  userId       String
+  steps        Int
+  distanceKm   Float
+  calories     Float
+  loggedAt     DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  action      String
+  resource    String
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@index([actorUserId, createdAt])
+}

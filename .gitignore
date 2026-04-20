@@ -1,0 +1,44 @@
+node_modules
+.env
+.env.*
+!.env.example
+dist
+coverage
+*.log
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+apps/mobile/.expo
+apps/mobile/.expo-shared
+apps/mobile/.env
+services/api/prisma/dev.db
+__pycache__
+.pytest_cache
+.venv
+
+# Local build/deploy artifacts
+*.tar.gz
+*.tgz
+
+# Local QA payload and response dumps
+*_payload.json
+*_payload_*.json
+*_resp.json
+*_tmp.json
+admin_login_test*.json
+student_*_resp.json
+student_*_payload.json
+student_*.json
+login_*.json
+signup_*.json
+*_duckdns.json
+*_win32.json
+
+# Local tool traces
+.terminal_probe
+.lighthouseci/
+
+# Keys and service account files
+*firebase-adminsdk*.json
+*.pem
+*.key

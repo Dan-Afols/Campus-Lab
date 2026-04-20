@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gradient-brand: linear-gradient(135deg, #0A1628 0%, #1A3A6B 50%, #4A90E2 100%);
+  --gradient-ai: linear-gradient(135deg, #6C8EE8 0%, #9B59B6 100%);
+  --gradient-health: linear-gradient(135deg, #1ABC9C 0%, #2ECC71 100%);
+  --gradient-finance: linear-gradient(135deg, #F39C12 0%, #E67E22 100%);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: radial-gradient(circle at 20% -10%, rgba(74, 144, 226, 0.2), transparent 28%),
+    radial-gradient(circle at 90% 130%, rgba(155, 89, 182, 0.18), transparent 30%),
+    #f8fafc;
+  color: #1e293b;
+}
+
+.dark body {
+  background: radial-gradient(circle at 20% -10%, rgba(74, 144, 226, 0.16), transparent 28%),
+    radial-gradient(circle at 90% 130%, rgba(155, 89, 182, 0.18), transparent 30%),
+    #0a1628;
+  color: #f8fafc;
+}
+
+.phone-frame {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.dark .phone-frame {
+  background: #0a1628;
+}
+
+@media (min-width: 960px) {
+  .phone-frame {
+    box-shadow: 0px 16px 40px rgba(0, 0, 0, 0.16);
+    border-radius: 24px;
+    min-height: calc(100vh - 24px);
+    margin-top: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+}
+
+.safe-top {
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+
+.safe-bottom {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.glass-chip {
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.focus-ring {
+  @apply focus-visible:ring-2 focus-visible:ring-electric-blue focus-visible:outline-none;
+}
