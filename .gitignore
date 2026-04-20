@@ -38,6 +38,12 @@ signup_*.json
 .terminal_probe
 .lighthouseci/
 
+# Local planning/scratch docs
+CampusLab_PWA_Prompt.txt
+HACKATHON_200_PLUS_QA.txt
+HACKATHON_JUDGE_PREP.txt
+SCRIPT_COMMANDS.md
+
 # Keys and service account files
 *firebase-adminsdk*.json
 *.pem
