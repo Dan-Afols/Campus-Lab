@@ -1,13 +1,22 @@
 import dotenv from "dotenv";
 import { z } from "zod";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const apiEnvPath = path.resolve(__dirname, "../../../.env");
 
-dotenv.config({ path: apiEnvPath, override: true });
+const envCandidates = [
+  path.resolve(process.cwd(), ".env"),
+  path.resolve(__dirname, "../../../../.env"),
+  path.resolve(__dirname, "../../../.env")
+];
+
+const apiEnvPath = envCandidates.find((candidate) => fs.existsSync(candidate));
+if (apiEnvPath) {
+  dotenv.config({ path: apiEnvPath, override: true });
+}
 
 const envBoolean = (defaultValue: boolean) =>
   z
