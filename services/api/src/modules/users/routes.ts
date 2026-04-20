@@ -3,9 +3,34 @@ import multer from "multer";
 import { authMiddleware } from "../../common/middleware/auth.js";
 import { prisma } from "../../common/lib/prisma.js";
 import { uploadToCloudinary } from "../../common/lib/cloudinary.js";
+import { decryptField } from "../../common/utils/crypto.js";
 
 export const usersRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+function mapUserForClient(user: any) {
+  if (!user) {
+    return null;
+  }
+
+  let matricNumber: string | null = null;
+
+  try {
+    matricNumber = user?.matricNumberEncrypted ? decryptField(user.matricNumberEncrypted) : null;
+  } catch {
+    matricNumber = null;
+  }
+
+  return {
+    ...user,
+    matricNumber,
+    matricNumberEncrypted: undefined,
+    dobEncrypted: undefined,
+    passwordHash: undefined,
+    refreshTokenHash: undefined,
+    twoFactorSecretEncrypted: undefined,
+  };
+}
 
 usersRouter.use(authMiddleware);
 
@@ -21,7 +46,7 @@ usersRouter.get("/me", async (req, res) => {
     }
   });
 
-  return res.json(user);
+  return res.json(mapUserForClient(user));
 });
 
 usersRouter.patch("/me", upload.single("profilePhoto"), async (req, res) => {
@@ -50,7 +75,7 @@ usersRouter.patch("/me", upload.single("profilePhoto"), async (req, res) => {
     }
   });
 
-  return res.json(updated);
+  return res.json(mapUserForClient(updated));
 });
 
 usersRouter.get("/sessions", async (req, res) => {
