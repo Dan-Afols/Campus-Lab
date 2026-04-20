@@ -17,6 +17,15 @@ export function AIAssistant() {
   const keyboardOffset = useVirtualViewport();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const onComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      if (!loading) {
+        void send();
+      }
+    }
+  };
+
   const send = async (question = input) => {
     if (!question.trim()) return;
     setMessages((prev) => [...prev, { role: "user", text: question }]);
@@ -43,7 +52,7 @@ export function AIAssistant() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-190px)] flex-col gap-3">
+    <div className="flex min-h-[calc(100vh-190px)] flex-col gap-3">
       <Card className="border-0 text-white shadow-[0_16px_45px_rgba(9,31,61,0.26)]" style={{ background: "linear-gradient(135deg, #06203f 0%, #18427d 50%, #5b8ee8 100%)" }}>
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
@@ -63,8 +72,8 @@ export function AIAssistant() {
         </div>
       </Card>
 
-      <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
-        <div ref={containerRef} className="space-y-2 overflow-y-auto rounded-2xl border border-mid-gray/20 bg-white p-3 dark:border-dark-border dark:bg-dark-surface">
+      <div className="grid flex-1 gap-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+        <div ref={containerRef} className="h-[44vh] space-y-2 overflow-y-auto rounded-2xl border border-mid-gray/20 bg-white p-3 dark:border-dark-border dark:bg-dark-surface lg:h-[48vh]">
         {messages.length === 0 ? (
           <Card>
             <p className="text-body-md">Hi, how can I help?</p>
@@ -103,18 +112,40 @@ export function AIAssistant() {
         </Card>
       </div>
 
-      <div className="safe-bottom rounded-2xl border border-mid-gray/20 bg-white p-3 shadow-level-1 dark:border-dark-border dark:bg-dark-surface" style={{ transform: `translateY(-${keyboardOffset}px)` }}>
+      <div className="safe-bottom sticky bottom-0 rounded-2xl border border-mid-gray/20 bg-white/95 p-3 shadow-level-1 backdrop-blur dark:border-dark-border dark:bg-dark-surface/95" style={{ transform: `translateY(-${keyboardOffset}px)` }}>
+        <div className="mb-2 flex items-center justify-between text-caption text-mid-gray">
+          <span>{model === "math" ? "Math mode" : model === "summary" ? "Summary mode" : "General mode"}</span>
+          <span>{input.length}/500</span>
+        </div>
         <div className="flex items-end gap-2">
           <textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}
+            onKeyDown={onComposerKeyDown}
             placeholder="Ask Campus Lab AI"
             rows={2}
+            maxLength={500}
             className="focus-ring min-h-[56px] flex-1 resize-none rounded-xl border border-mid-gray/40 bg-white px-3 py-2 text-body-sm text-near-black dark:bg-dark-surface dark:text-off-white"
           />
-          <Button onClick={() => send()} loading={loading} className="shrink-0">
+          <Button onClick={() => send()} loading={loading} disabled={!input.trim() || loading} className="shrink-0">
             Send
           </Button>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {[
+            "Explain in simple terms",
+            "Give me 3 action steps",
+            "Create a study plan"
+          ].map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => setInput((prev) => (prev ? `${prev} ${preset}` : preset))}
+              className="focus-ring rounded-lg border border-mid-gray/30 px-2 py-1 text-caption text-dark-gray transition hover:border-electric-blue/40 hover:bg-electric-blue/5 dark:text-mid-gray"
+            >
+              {preset}
+            </button>
+          ))}
         </div>
       </div>
     </div>
