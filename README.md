@@ -2,6 +2,20 @@
 
 Campus Lab is a production-ready student super app monorepo with mobile/web clients, a secure Node.js + Prisma API, and an AI service for campus academics, hostel booking, health, finance, and notifications.
 
+## Live Demo Access
+
+- PWA: https://campuslabs.duckdns.org/
+- Admin: https://campuslabs.duckdns.org/admin/
+
+### Demo Login Credentials
+
+- PWA demo user
+	- Email: student@campuslab.app
+	- Password: Student@123
+- Admin demo user
+	- Email: showcase@campuslab.app
+	- Password: Showcase@123!
+
 ## Core Docs
 
 - Architecture: docs/ARCHITECTURE.md
