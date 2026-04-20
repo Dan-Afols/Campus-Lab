@@ -6,10 +6,23 @@ import { prisma } from "../../common/lib/prisma.js";
 import { authMiddleware } from "../../common/middleware/auth.js";
 import { requireRole } from "../../common/middleware/roles.js";
 import { Gender, UserRole, UserStatus } from "@prisma/client";
+import { decryptField } from "../../common/utils/crypto.js";
 
 export const adminUsersRouter = Router();
 
 adminUsersRouter.use(authMiddleware, requireRole(UserRole.ADMIN));
+
+function safeDecryptMatric(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return decryptField(value);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * GET /admin/users/students
@@ -46,6 +59,7 @@ adminUsersRouter.get("/students", async (req, res) => {
           id: true,
           email: true,
           fullName: true,
+          matricNumberEncrypted: true,
           status: true,
           createdAt: true,
           updatedAt: true,
@@ -61,8 +75,14 @@ adminUsersRouter.get("/students", async (req, res) => {
       prisma.user.count({ where }),
     ]);
 
+    const normalizedStudents = students.map((student) => ({
+      ...student,
+      matricNumber: safeDecryptMatric(student.matricNumberEncrypted),
+      matricNumberEncrypted: undefined,
+    }));
+
     return res.json({
-      data: students,
+      data: normalizedStudents,
       pagination: {
         total,
         page,
@@ -100,7 +120,15 @@ adminUsersRouter.get("/students/:id", async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    return res.json(student);
+    return res.json({
+      ...student,
+      matricNumber: safeDecryptMatric(student.matricNumberEncrypted),
+      matricNumberEncrypted: undefined,
+      dobEncrypted: undefined,
+      passwordHash: undefined,
+      refreshTokenHash: undefined,
+      twoFactorSecretEncrypted: undefined,
+    });
   } catch (error) {
     console.error("Fetch student error:", error);
     return res.status(500).json({ message: "Internal server error" });
