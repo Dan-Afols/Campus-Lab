@@ -3,7 +3,7 @@ import { queryClient } from "@/queries/queryClient";
 import { useAuthStore } from "@/stores/authStore";
 
 type RealtimeEvent = {
-  channel: "news" | "materials" | "past-questions";
+  channel: "news" | "materials" | "past-questions" | "timetable" | "notifications";
   action: "created" | "updated" | "deleted";
   entityId?: string;
   at: string;
@@ -68,6 +68,14 @@ export function useRealtimeDataSync() {
 
         if (payload.channel === "past-questions") {
           void queryClient.invalidateQueries({ queryKey: ["pastQuestions"] });
+        }
+
+        if (payload.channel === "timetable") {
+          void queryClient.invalidateQueries({ queryKey: ["timetable"] });
+        }
+
+        if (payload.channel === "notifications") {
+          void queryClient.invalidateQueries({ queryKey: ["notifications"] });
         }
       } catch {
         // Ignore malformed realtime event payloads.
