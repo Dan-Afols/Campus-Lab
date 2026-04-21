@@ -4,6 +4,7 @@ import { authMiddleware } from "../../common/middleware/auth.js";
 import { requireRole } from "../../common/middleware/roles.js";
 import { prisma } from "../../common/lib/prisma.js";
 import { z } from "zod";
+import { emitRealtimeEvent } from "../../common/lib/realtime.js";
 
 export const timetableRouter = Router();
 
@@ -115,6 +116,9 @@ timetableRouter.post("/course-rep", requireRole(UserRole.COURSE_REP, UserRole.AD
         })),
       });
     }
+
+    emitRealtimeEvent({ channel: "timetable", action: "created", entityId: created.id });
+    emitRealtimeEvent({ channel: "notifications", action: "created" });
 
     return res.status(201).json(created);
   } catch (error) {

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { authMiddleware } from "../../common/middleware/auth.js";
 import { prisma } from "../../common/lib/prisma.js";
 import { requireRole } from "../../common/middleware/roles.js";
+import { emitRealtimeEvent } from "../../common/lib/realtime.js";
 import { deviceTokensRouter } from "./deviceTokens.routes.js";
 
 export const notificationsRouter = Router();
@@ -61,6 +62,11 @@ notificationsRouter.post("/broadcast", requireRole(UserRole.COURSE_REP, UserRole
           senderRole: req.user!.role,
         },
       })),
+    });
+
+    emitRealtimeEvent({
+      channel: "notifications",
+      action: "created",
     });
 
     return res.status(201).json({ delivered: users.length });

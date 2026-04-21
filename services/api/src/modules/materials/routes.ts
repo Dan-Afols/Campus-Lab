@@ -55,9 +55,30 @@ materialsRouter.post(
       return res.status(400).json({ error: "file is required" });
     }
 
-    const { title, description, courseId, type } = req.body;
+    const { title, description, type } = req.body;
+    const rawCourseId = typeof req.body.courseId === "string" ? req.body.courseId.trim() : "";
+    const rawCourseCode = typeof req.body.courseCode === "string" ? req.body.courseCode.trim().toUpperCase() : "";
     const fileType = String(type);
     const resourceType = fileType === "MP4" ? "video" : "raw";
+
+    if (!title || !type || (!rawCourseId && !rawCourseCode)) {
+      return res.status(400).json({ error: "title, type, and either courseId or courseCode are required" });
+    }
+
+    const course = await prisma.course.findFirst({
+      where: {
+        departmentId: req.user!.departmentId,
+        OR: [
+          { id: rawCourseId || undefined },
+          { code: rawCourseCode || undefined },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (!course) {
+      return res.status(404).json({ error: "course not found for your department" });
+    }
 
     await ensureBufferIsClean(req.file.buffer);
 
@@ -67,7 +88,7 @@ materialsRouter.post(
       data: {
         title,
         description,
-        courseId,
+        courseId: course.id,
         type,
         departmentId: req.user!.departmentId,
         departmentLevelId: req.user!.departmentLevelId,
