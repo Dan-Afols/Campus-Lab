@@ -38,7 +38,10 @@ materialsRouter.get("/mine", async (req, res) => {
     where: {
       departmentId: req.user!.departmentId,
       departmentLevelId: req.user!.departmentLevelId,
-      approvedByAdmin: true
+      OR: [
+        { approvedByAdmin: true },
+        { uploadedById: req.user!.id }
+      ]
     },
     include: { course: true },
     orderBy: { createdAt: "desc" }
