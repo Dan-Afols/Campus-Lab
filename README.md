@@ -16,13 +16,12 @@ Campus Lab is a production-ready student super app monorepo with mobile/web clie
 	- Email: showcase@campuslab.app
 	- Password: Showcase@123!
 
-### Credits
--Team
-   -Adebiyi Diekooloreoluwa
-   -Afolabi Daniel
-   -Hammed Wajud
-   -Ogunseye Hannah
-   -Ogunnaike Olanrewaju
+## 👥 Team
+* **Adebiyi Diekooloreoluwa** 
+* **Afolabi Daniel** 
+* **Hammed Wajud**
+* **Ogunseye Hannah** 
+* **Ogunnaike Olanrewaju** 
    
 ## Core Docs
 
