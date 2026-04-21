@@ -5,8 +5,8 @@ export function useTimetableQuery(day?: string) {
   return useQuery({
     queryKey: ["timetable", day],
     queryFn: async () => {
-      const response = await api.get("/timetable", { params: day ? { day } : undefined });
-      return response.data?.data ?? [];
+      const response = await api.get("/timetable/mine");
+      return response.data ?? [];
     }
   });
 }

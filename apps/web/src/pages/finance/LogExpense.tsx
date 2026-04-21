@@ -7,7 +7,7 @@ import { useLogExpenseMutation, useExpensesQuery } from "@/queries/useFinanceQue
 import { ScreenScaffold } from "@/pages/ScreenScaffold";
 import { useQueryClient } from "@tanstack/react-query";
 
-const EXPENSE_CATEGORIES = ["Food", "Transport", "Books", "Accommodation", "Entertainment", "Health", "Utilities", "Other"];
+const EXPENSE_CATEGORIES = ["Food", "Transport", "Books", "Utilities", "Entertainment", "Health", "Other"];
 
 export function LogExpense() {
   const mutation = useLogExpenseMutation();
@@ -21,19 +21,27 @@ export function LogExpense() {
   const totalExpenses = (expenses as any[]).reduce((sum, exp: any) => sum + (Number(exp.amount) || 0), 0);
 
   const submit = async () => {
-    if (!amount || !category) {
-      toast.error("Please fill in all required fields");
+    const amountNum = Number(amount);
+    if (!amount || amountNum <= 0 || !category) {
+      toast.error("Please fill in all fields with valid values");
       return;
     }
     try {
-      await mutation.mutateAsync({ amount: Number(amount), category, description, spentAt });
+      await mutation.mutateAsync({ 
+        amount: amountNum, 
+        category: category.toUpperCase(), 
+        description: description.trim(), 
+        spentAt: new Date(spentAt).toISOString() 
+      });
       toast.success("Expense logged successfully");
       setAmount("");
       setDescription("");
+      setSpentAt(new Date().toISOString().slice(0, 10));
       queryClient.invalidateQueries({ queryKey: ["finance-expenses"] });
       queryClient.invalidateQueries({ queryKey: ["finance-dashboard"] });
-    } catch (error) {
-      toast.error("Failed to log expense");
+    } catch (error: any) {
+      console.error("Expense error:", error);
+      toast.error(error?.response?.data?.message || "Failed to log expense");
     }
   };
 

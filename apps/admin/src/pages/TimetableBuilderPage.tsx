@@ -55,6 +55,7 @@ export function TimetableBuilderPage() {
   const [filterSchoolId, setFilterSchoolId] = useState("");
   const [filterCollegeId, setFilterCollegeId] = useState("");
   const [filterDepartmentId, setFilterDepartmentId] = useState("");
+  const [filterLevelId, setFilterLevelId] = useState("");
   
   const [courseForm, setCourseForm] = useState({
     departmentId: "",
@@ -130,18 +131,35 @@ export function TimetableBuilderPage() {
     return college?.departments || [];
   };
 
-  // Filter courses based on selected department
+  // Get levels for selected department
+  const getLevelsForDepartment = () => {
+    if (!filterDepartmentId) return [];
+    const departments = getDepartmentsForCollege();
+    const department = departments.find(d => d.id === filterDepartmentId);
+    return (department as any)?.levels || [];
+  };
+// Filter courses based on selected department and level
   const getFilteredCourses = () => {
-    if (!filterDepartmentId) return courses;
-    return courses.filter(c => c.departmentId === filterDepartmentId || c.department?.id === filterDepartmentId);
+    let filtered = courses;
+    if (filterDepartmentId) {
+      filtered = filtered.filter(c => c.departmentId === filterDepartmentId || c.department?.id === filterDepartmentId);
+    }
+    if (filterLevelId) {
+      filtered = filtered.filter(c => String(c.level) === filterLevelId || Number(c.level) === Number(filterLevelId));
+    }
+    return filtered;
   };
 
-  // Filter timetable based on selected department and courses
+  // Filter timetable based on selected department, level and courses
   const getFilteredTimetable = () => {
     if (!filterDepartmentId) return timetable;
     const filteredCourses = getFilteredCourses();
     const courseIds = filteredCourses.map(c => c.id);
-    return timetable.filter(t => courseIds.includes(t.courseId));
+    let filtered = timetable.filter(t => courseIds.includes(t.courseId));
+    if (filterLevelId) {
+      filtered = filtered.filter(t => t.departmentLevelId === filterLevelId);
+    }
+    return filtered;
   };
 
   const handleCreateCourse = async (e: React.FormEvent) => {
@@ -245,7 +263,7 @@ export function TimetableBuilderPage() {
           <CardDescription>Narrow down courses and timetables by school, college, and department</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label htmlFor="filterSchool">School</Label>
               <Select
@@ -255,6 +273,7 @@ export function TimetableBuilderPage() {
                   setFilterSchoolId(e.target.value);
                   setFilterCollegeId("");
                   setFilterDepartmentId("");
+                  setFilterLevelId("");
                 }}
                 className="mt-2"
               >
@@ -275,6 +294,7 @@ export function TimetableBuilderPage() {
                 onChange={(e) => {
                   setFilterCollegeId(e.target.value);
                   setFilterDepartmentId("");
+                  setFilterLevelId("");
                 }}
                 disabled={!filterSchoolId}
                 className="mt-2"
@@ -293,7 +313,10 @@ export function TimetableBuilderPage() {
               <Select
                 id="filterDepartment"
                 value={filterDepartmentId}
-                onChange={(e) => setFilterDepartmentId(e.target.value)}
+                onChange={(e) => {
+                  setFilterDepartmentId(e.target.value);
+                  setFilterLevelId("");
+                }}
                 disabled={!filterCollegeId}
                 className="mt-2"
               >
@@ -305,9 +328,27 @@ export function TimetableBuilderPage() {
                 ))}
               </Select>
             </div>
+
+            <div>
+              <Label htmlFor="filterLevel">Level</Label>
+              <Select
+                id="filterLevel"
+                value={filterLevelId}
+                onChange={(e) => setFilterLevelId(e.target.value)}
+                disabled={!filterDepartmentId}
+                className="mt-2"
+              >
+                <option value="">All Levels</option>
+                {getLevelsForDepartment().map((level: any) => (
+                  <option key={level.id} value={level.id}>
+                    Level {level.level}
+                  </option>
+                ))}
+              </Select>
+            </div>
           </div>
           
-          {(filterSchoolId || filterCollegeId || filterDepartmentId) && (
+          {(filterSchoolId || filterCollegeId || filterDepartmentId || filterLevelId) && (
             <Button 
               variant="outline" 
               className="mt-4"
@@ -315,6 +356,7 @@ export function TimetableBuilderPage() {
                 setFilterSchoolId("");
                 setFilterCollegeId("");
                 setFilterDepartmentId("");
+                setFilterLevelId("");
               }}
             >
               Clear Filters
