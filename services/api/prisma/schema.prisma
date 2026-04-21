@@ -13,6 +13,13 @@ enum UserRole {
   ADMIN
 }
 
+enum AdminRole {
+  SUPER_ADMIN
+  UNIVERSITY_ADMIN
+  COLLEGE_ADMIN
+  DEPARTMENT_ADMIN
+}
+
 enum UserStatus {
   PENDING
   ACTIVE
@@ -134,6 +141,7 @@ model User {
   dobEncrypted             String
   gender                   Gender
   role                     UserRole        @default(STUDENT)
+  adminRole                AdminRole?      // Only set if role is ADMIN
   status                   UserStatus      @default(PENDING)
   schoolId                 String
   collegeId                String

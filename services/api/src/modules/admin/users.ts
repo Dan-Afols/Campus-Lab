@@ -5,8 +5,9 @@ import { randomBytes, createHash } from "crypto";
 import { prisma } from "../../common/lib/prisma.js";
 import { authMiddleware } from "../../common/middleware/auth.js";
 import { requireRole } from "../../common/middleware/roles.js";
-import { Gender, UserRole, UserStatus } from "@prisma/client";
+import { Gender, UserRole, UserStatus, AdminRole } from "@prisma/client";
 import { decryptField } from "../../common/utils/crypto.js";
+import { canAdminManageResource, getMaxCreatableAdminRole, getAdminRoleForHierarchy } from "../../common/middleware/adminPermissions.js";
 
 export const adminUsersRouter = Router();
 
@@ -489,16 +490,52 @@ adminUsersRouter.post("/course-reps/:id/activate", async (req, res) => {
 
 /**
  * GET /admin/users/admins
- * List all admin accounts
+ * List all admin accounts (filtered by permission scope)
  */
 adminUsersRouter.get("/admins", async (req, res) => {
   try {
+    const actor = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: {
+        schoolId: true,
+        collegeId: true,
+        departmentId: true,
+        adminRole: true,
+      },
+    });
+
+    if (!actor) {
+      return res.status(404).json({ message: "Admin actor not found" });
+    }
+
+    // Build where clause based on actor's admin role
+    let whereClause: any = { role: UserRole.ADMIN };
+    
+    if (actor.adminRole === AdminRole.UNIVERSITY_ADMIN) {
+      // University admin can only see admins in their school
+      whereClause.schoolId = actor.schoolId;
+    } else if (actor.adminRole === AdminRole.COLLEGE_ADMIN) {
+      // College admin can only see admins in their college
+      whereClause.schoolId = actor.schoolId;
+      whereClause.collegeId = actor.collegeId;
+    } else if (actor.adminRole === AdminRole.DEPARTMENT_ADMIN) {
+      // Department admin can only see admins in their department
+      whereClause.schoolId = actor.schoolId;
+      whereClause.collegeId = actor.collegeId;
+      whereClause.departmentId = actor.departmentId;
+    }
+    // SUPER_ADMIN sees all admins (no additional where clause)
+
     const admins = await prisma.user.findMany({
-      where: { role: UserRole.ADMIN },
+      where: whereClause,
       select: {
         id: true,
         email: true,
         fullName: true,
+        adminRole: true,
+        schoolId: true,
+        collegeId: true,
+        departmentId: true,
         status: true,
         createdAt: true,
         updatedAt: true,
@@ -523,10 +560,10 @@ adminUsersRouter.post("/admins", async (req, res) => {
       email: z.string().email(),
       fullName: z.string().min(2),
       password: z.string().min(12, "Admin password must be at least 12 characters"),
-      schoolId: z.string().uuid().optional(),
-      collegeId: z.string().uuid().optional(),
-      departmentId: z.string().uuid().optional(),
-      departmentLevelId: z.string().uuid().optional(),
+      schoolId: z.string().optional(),
+      collegeId: z.string().optional(),
+      departmentId: z.string().optional(),
+      departmentLevelId: z.string().optional(),
       phoneNumber: z.string().min(7).optional(),
       emergencyContactName: z.string().min(2).optional(),
       emergencyContactPhone: z.string().min(7).optional(),
@@ -540,11 +577,51 @@ adminUsersRouter.post("/admins", async (req, res) => {
         collegeId: true,
         departmentId: true,
         departmentLevelId: true,
+        adminRole: true,
       },
     });
 
     if (!actor) {
       return res.status(404).json({ message: "Admin actor not found" });
+    }
+
+    // Determine which admin role to assign
+    const resolvedAdminRole = getAdminRoleForHierarchy(body.collegeId, body.departmentId, body.departmentLevelId);
+    
+    // Check if actor is allowed to create this role
+    const allowedRoles = getMaxCreatableAdminRole(actor.adminRole);
+    if (!allowedRoles.includes(resolvedAdminRole)) {
+      return res.status(403).json({ 
+        message: `You don't have permission to create ${resolvedAdminRole} admins` 
+      });
+    }
+
+    // Check if the target hierarchy is within the actor's scope
+    const targetSchoolId = body.schoolId || actor.schoolId;
+    const targetCollegeId = body.collegeId || actor.collegeId;
+    const targetDepartmentId = body.departmentId || actor.departmentId;
+
+    if (!canAdminManageResource(
+      actor.adminRole,
+      actor.schoolId,
+      actor.collegeId,
+      actor.departmentId,
+      targetSchoolId,
+      targetCollegeId,
+      targetDepartmentId
+    )) {
+      return res.status(403).json({ 
+        message: "You can only create admins for your assigned institution" 
+      });
+    }
+
+    // Check for existing email
+    const existingEmail = await prisma.user.findUnique({
+      where: { email: body.email },
+    });
+
+    if (existingEmail) {
+      return res.status(409).json({ message: "Email already in use" });
     }
 
     const hashedPassword = await bcrypt.hash(body.password, 12);
@@ -559,13 +636,14 @@ adminUsersRouter.post("/admins", async (req, res) => {
           phoneNumber: body.phoneNumber || "0000000000",
           dobEncrypted: "1970-01-01",
           gender: Gender.MALE,
-          schoolId: body.schoolId || actor.schoolId,
-          collegeId: body.collegeId || actor.collegeId,
-          departmentId: body.departmentId || actor.departmentId,
+          schoolId: targetSchoolId,
+          collegeId: targetCollegeId,
+          departmentId: targetDepartmentId,
           departmentLevelId: body.departmentLevelId || actor.departmentLevelId,
           emergencyContactName: body.emergencyContactName || "System",
           emergencyContactPhone: body.emergencyContactPhone || "0000000000",
           role: UserRole.ADMIN,
+          adminRole: resolvedAdminRole,
           status: UserStatus.ACTIVE,
         },
       }),
@@ -574,6 +652,12 @@ adminUsersRouter.post("/admins", async (req, res) => {
           actorUserId: req.user!.id,
           action: "ADMIN_CREATED",
           resource: body.email,
+          metadata: { 
+            adminRole: resolvedAdminRole,
+            schoolId: targetSchoolId,
+            collegeId: targetCollegeId,
+            departmentId: targetDepartmentId,
+          },
           ipAddress: req.ip || "unknown",
         },
       }),
@@ -581,16 +665,25 @@ adminUsersRouter.post("/admins", async (req, res) => {
 
     return res.status(201).json({
       message: "Admin account created. New admin must setup 2FA on first login.",
-      admin: newAdmin[0],
+      admin: {
+        id: newAdmin[0].id,
+        email: newAdmin[0].email,
+        fullName: newAdmin[0].fullName,
+        adminRole: newAdmin[0].adminRole,
+        schoolId: newAdmin[0].schoolId,
+        collegeId: newAdmin[0].collegeId,
+        departmentId: newAdmin[0].departmentId,
+      },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid input" });
+      return res.status(400).json({ message: "Invalid input", errors: error.errors });
     }
     console.error("Create admin error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 /**
  * DELETE /admin/users/admins/:id
@@ -609,6 +702,54 @@ adminUsersRouter.delete("/admins/:id", async (req, res) => {
       return res.status(400).json({ message: "Cannot delete your own admin account" });
     }
 
+    // Get the actor and target admin
+    const [actor, targetAdmin] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: req.user!.id },
+        select: {
+          schoolId: true,
+          collegeId: true,
+          departmentId: true,
+          adminRole: true,
+        },
+      }),
+      prisma.user.findUnique({
+        where: { id: req.params.id },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          schoolId: true,
+          collegeId: true,
+          departmentId: true,
+          adminRole: true,
+        },
+      }),
+    ]);
+
+    if (!actor) {
+      return res.status(404).json({ message: "Admin actor not found" });
+    }
+
+    if (!targetAdmin || targetAdmin.role !== UserRole.ADMIN) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // Check if actor can manage this admin
+    if (!canAdminManageResource(
+      actor.adminRole,
+      actor.schoolId,
+      actor.collegeId,
+      actor.departmentId,
+      targetAdmin.schoolId,
+      targetAdmin.collegeId,
+      targetAdmin.departmentId
+    )) {
+      return res.status(403).json({ 
+        message: "You don't have permission to delete this admin" 
+      });
+    }
+
     await prisma.$transaction([
       prisma.user.delete({
         where: { id: req.params.id },
@@ -617,7 +758,10 @@ adminUsersRouter.delete("/admins/:id", async (req, res) => {
         data: {
           actorUserId: req.user!.id,
           action: "ADMIN_DELETED",
-          resource: req.params.id,
+          resource: targetAdmin.email,
+          metadata: {
+            targetAdminRole: targetAdmin.adminRole,
+          },
           ipAddress: req.ip || "unknown",
         },
       }),
