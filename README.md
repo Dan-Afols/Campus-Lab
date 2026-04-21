@@ -15,8 +15,8 @@ Campus Lab is a production-ready student super app monorepo with mobile/web clie
 	- Email: student@campuslab.app
 	- Password: Student@123
 - Admin demo user
-	- Email: showcase@campuslab.app
-	- Password: Showcase@123!
+	- Email: admin@campuslab.app
+	- Password: Admin@123
 
 ##  Team
 * **Adebiyi Diekooloreoluwa** 
