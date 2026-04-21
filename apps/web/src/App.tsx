@@ -22,6 +22,8 @@ const Timetable = lazy(() => import("@/pages/academics/Timetable").then((m) => (
 const MaterialsList = lazy(() => import("@/pages/academics/MaterialsList").then((m) => ({ default: m.MaterialsList })));
 const MaterialDetail = lazy(() => import("@/pages/academics/MaterialDetail").then((m) => ({ default: m.MaterialDetail })));
 const PastQuestions = lazy(() => import("@/pages/academics/PastQuestions").then((m) => ({ default: m.PastQuestions })));
+const CourseRepTimetableUpload = lazy(() => import("@/pages/academics/CourseRepTimetableUpload").then((m) => ({ default: m.CourseRepTimetableUpload })));
+const CourseRepSendNotification = lazy(() => import("@/pages/academics/CourseRepSendNotification").then((m) => ({ default: m.CourseRepSendNotification })));
 const HostelListing = lazy(() => import("@/pages/hostel/HostelListing").then((m) => ({ default: m.HostelListing })));
 const HostelDetail = lazy(() => import("@/pages/hostel/HostelDetail").then((m) => ({ default: m.HostelDetail })));
 const BedSelection = lazy(() => import("@/pages/hostel/BedSelection").then((m) => ({ default: m.BedSelection })));
@@ -72,6 +74,8 @@ function RouteShell() {
               <Route path="/academics/materials" element={<MaterialsList />} />
               <Route path="/academics/materials/:id" element={<MaterialDetail />} />
               <Route path="/academics/past-questions" element={<PastQuestions />} />
+              <Route path="/academics/course-rep/timetable-upload" element={<CourseRepTimetableUpload />} />
+              <Route path="/academics/course-rep/send-notification" element={<CourseRepSendNotification />} />
               <Route path="/hostel" element={<HostelListing />} />
               <Route path="/hostel/:id" element={<HostelDetail />} />
               <Route path="/hostel/:id/book" element={<BedSelection />} />
