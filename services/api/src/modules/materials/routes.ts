@@ -68,7 +68,7 @@ materialsRouter.post(
       return res.status(400).json({ error: "title, type, and either courseId or courseCode are required" });
     }
 
-    const course = await prisma.course.findFirst({
+    let course = await prisma.course.findFirst({
       where: {
         departmentId: req.user!.departmentId,
         OR: [
