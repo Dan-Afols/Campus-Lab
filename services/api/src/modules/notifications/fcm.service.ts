@@ -7,6 +7,22 @@ let initialized = false;
 function resolveServiceAccountFromFile() {
   const configuredPath = process.env.FCM_SERVICE_ACCOUNT_FILE;
   if (!configuredPath) {
+    // Try to auto-discover a service account file in project root matching common Firebase SDK pattern
+    try {
+      const files = fs.readdirSync(process.cwd());
+      const match = files.find((f) => f.includes("firebase-adminsdk") && f.endsWith(".json"));
+      if (match) {
+        const raw = fs.readFileSync(path.resolve(process.cwd(), match), "utf8");
+        const parsed = JSON.parse(raw);
+        return {
+          projectId: parsed.project_id,
+          clientEmail: parsed.client_email,
+          privateKey: String(parsed.private_key || "").replace(/\\n/g, "\n")
+        };
+      }
+    } catch (e) {
+      // ignore and fallthrough to null
+    }
     return null;
   }
 
@@ -33,11 +49,15 @@ export function initFirebase() {
   }
 
   const fromFile = resolveServiceAccountFromFile();
-  const projectId = fromFile?.projectId ?? process.env.FCM_PROJECT_ID;
-  const clientEmail = fromFile?.clientEmail ?? process.env.FCM_CLIENT_EMAIL;
-  const privateKey = fromFile?.privateKey ?? process.env.FCM_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  const projectId = (fromFile?.projectId ?? process.env.FCM_PROJECT_ID)?.toString().trim();
+  const clientEmail = (fromFile?.clientEmail ?? process.env.FCM_CLIENT_EMAIL)?.toString().trim();
+  let privateKeyRaw = fromFile?.privateKey ?? process.env.FCM_PRIVATE_KEY;
+  if (typeof privateKeyRaw === "string") {
+    privateKeyRaw = privateKeyRaw.replace(/\\n/g, "\n").trim();
+  }
 
-  if (!projectId || !clientEmail || !privateKey) {
+  if (!projectId || !clientEmail || !privateKeyRaw) {
+    console.warn("Firebase credentials not found or incomplete. To enable push, set FCM_SERVICE_ACCOUNT_FILE or FCM_PROJECT_ID/FCM_CLIENT_EMAIL/FCM_PRIVATE_KEY env vars.");
     return;
   }
 
@@ -46,7 +66,7 @@ export function initFirebase() {
       credential: admin.credential.cert({
         projectId,
         clientEmail,
-        privateKey
+        privateKey: privateKeyRaw as string
       })
     });
 

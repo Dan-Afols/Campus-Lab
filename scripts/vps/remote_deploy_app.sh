@@ -28,7 +28,13 @@ EOF
 
 npm --workspace services/api run prisma:generate
 npm --workspace services/api run prisma:push
-npm --workspace services/api run seed
+# Seed is destructive. Only run when FORCE_SEED=true in the environment.
+if [ "${FORCE_SEED:-}" = "true" ]; then
+  echo "FORCE_SEED=true detected — running seed script"
+  npm --workspace services/api run seed
+else
+  echo "Skipping prisma seed (set FORCE_SEED=true to run)"
+fi
 npm --workspace services/api run build
 npm --workspace apps/web run build
 npm --workspace apps/admin run build -- --base=/admin/

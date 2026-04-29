@@ -49,3 +49,5 @@ aiRouter.post("/summarize", async (req, res) => {
     return res.status(502).json({ error: "AI provider request failed", detail: message });
   }
 });
+
+// AI meal-planner endpoint removed — feature deprecated per product decision.

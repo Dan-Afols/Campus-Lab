@@ -1,0 +1,10 @@
+The Ai meal planner we want to remove it and as for the budget calculator it should be weekly not month reconfigure then as for the hostel section just put a coming soon banner there for now later we will find out what to do and how to make it functional you can just do it that te admin page will have a control in the hostel section for me to on and off it you get 
+Then as for materia uploads when we try to upload a material it shows an error message saying course not available or something so let's fix the upload the uploading from the course rep and admin side you get
+also let it be that the app will be light mode 
+in the finance page Budget Calculator, Savings Goals, AI Meal Planner let their button be blue to like the log expense design you get
+and as for the pwa landing page when users login i don't want any data sown there to be demo everything in this case should be realtime 
+Also as for the pwa the push notification isn;t working the firebase..... the real json file is named campuslab-913a6-firebase-adminsdk-fbsvc-56580f18bd.json extract what is needed for notifications to turn to push notifications configure what is needed
+Then also in the admin side do it that as for the university side you can delete a university and as for the editing of a university it should not also be name that can be edited the colleges to must be editable like you can add more colleges or rename you get me 
+Also as for the running i want it that whenever the server restarts it would not clear the database or user info dredentials/details also as for the admin page dashboard the overview is showing demo data not realtime fix that 
+
+Then make sure changes are live 

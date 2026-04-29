@@ -1,4 +1,4 @@
-import { Bell, Download, FileText, Sparkles } from "lucide-react";
+import { Bell, Download, FileText, Sparkles, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Avatar } from "@/components/ui/Avatar";
@@ -8,11 +8,19 @@ import { GradientCard } from "@/components/ui/GradientCard";
 import { useHealthDashboardQuery } from "@/queries/useHealthQueries";
 import { useDashboardQuery } from "@/queries/useDashboardQuery";
 import { useAuthStore } from "@/stores/authStore";
+import { useNotificationsQuery } from "@/queries/useNotificationsQuery";
+import { useTimetableQuery } from "@/queries/useTimetableQuery";
+import { useMaterialsQuery } from "@/queries/useMaterialsQuery";
+import { useMyBookingQuery } from "@/queries/useHostelQueries";
 
 export function Dashboard() {
   const user = useAuthStore((s) => s.user);
   const { data } = useDashboardQuery();
   const { data: healthData } = useHealthDashboardQuery();
+    const { data: notifications = [] } = useNotificationsQuery();
+    const { data: timetableData = [] } = useTimetableQuery();
+    const { data: materialsData = [] } = useMaterialsQuery();
+    const { data: hostelBooking } = useMyBookingQuery();
   const rawLevel = (user as any)?.departmentLevel?.level ?? (user as any)?.level;
   const rawDepartment = (user as any)?.department;
   const parsedLevel =
@@ -27,6 +35,13 @@ export function Dashboard() {
   const departmentLabel =
     typeof rawDepartment === "string" ? rawDepartment : typeof rawDepartment?.name === "string" ? rawDepartment.name : "Computer Engineering";
   const stepsToday = (healthData?.steps ?? []).reduce((sum: number, entry: any) => sum + Number(entry.steps ?? 0), 0);
+  const todayClasses = timetableData.slice(0, 3).map((cls: any) => ({
+    code: cls.courseCode || "N/A",
+    room: cls.venue || "Lecture Hall",
+    time: cls.startsAt ? new Date(cls.startsAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : "TBD"
+  }));
+  const unreadNotifications = notifications.filter((n: any) => !n.readAt).length;
+  const recentMaterials = materialsData.slice(0, 3) || [];
 
   return (
     <div className="space-y-5">
@@ -49,9 +64,9 @@ export function Dashboard() {
         <p className="mt-2 text-body-sm text-white/85">{levelLabel} · {departmentLabel}</p>
         <div className="mt-3 grid grid-cols-2 gap-2">
           {[
-            "4 Classes Today",
-            "3 New Materials",
-            "2 Alerts",
+            `${todayClasses.length} Classes Today`,
+            `${recentMaterials.length} New Materials`,
+            `${unreadNotifications} Alerts`,
             `${stepsToday.toLocaleString()} Steps`
           ].map((item) => (
             <span key={item} className="glass-chip rounded-full px-3 py-1.5 text-center text-caption">
@@ -67,15 +82,19 @@ export function Dashboard() {
           <Badge color="blue">Live</Badge>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {["MTH 301", "CPE 309", "GST 302"].map((course, index) => (
+          {todayClasses.length > 0 ? todayClasses.map((course: any, index: number) => (
             <motion.div key={course} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }}>
               <Card className="border-l-4 border-l-electric-blue">
-                <p className="text-label text-electric-blue">{course}</p>
-                <p className="mt-1 text-body-sm">Lecture Hall {index + 2}</p>
-                <p className="text-caption text-mid-gray">10:{index}0 AM</p>
+                <p className="text-label text-electric-blue">{course.code}</p>
+                <p className="mt-1 text-body-sm">{course.room}</p>
+                <p className="text-caption text-mid-gray">{course.time}</p>
               </Card>
             </motion.div>
-          ))}
+          )) : (
+            <Card className="col-span-full">
+              <p className="text-body-sm text-mid-gray">No classes scheduled for today</p>
+            </Card>
+          )}
         </div>
       </section>
 
@@ -85,14 +104,14 @@ export function Dashboard() {
           <a className="text-body-sm text-electric-blue" href="/academics/materials">See All</a>
         </div>
         <div className="space-y-2">
-          {["Fluid Mechanics Notes", "Signals Cheat Sheet", "Hostel Rules PDF"].map((title) => (
-            <Card key={title} variant="list-item" className="flex items-center justify-between">
+          {recentMaterials.length > 0 ? recentMaterials.map((material: any) => (
+            <Card key={material.id} variant="list-item" className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="grid h-10 w-10 place-items-center rounded-full bg-electric-blue/12 text-electric-blue">
                   <FileText className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-body-sm font-medium">{title}</p>
+                  <p className="text-body-sm font-medium">{material.title}</p>
                   <p className="text-caption text-mid-gray">Updated today</p>
                 </div>
               </div>
@@ -101,7 +120,11 @@ export function Dashboard() {
                 <Download className="h-4 w-4 text-mid-gray" />
               </div>
             </Card>
-          ))}
+          )) : (
+            <Card variant="list-item">
+              <p className="text-body-sm text-mid-gray">No new materials</p>
+            </Card>
+          )}
         </div>
       </section>
 
@@ -109,7 +132,7 @@ export function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-label text-white/80">Hostel Booking</p>
-            <p className="text-h3">{data?.bookingStatus ?? "Confirmed · Block C"}</p>
+            <p className="text-h3">{hostelBooking?.bed?.room?.hostel?.name ? `${hostelBooking.bed.room.hostel.name} - ${hostelBooking.bed.bedNumber}` : "No booking yet"}</p>
           </div>
           <Sparkles className="h-6 w-6" />
         </div>

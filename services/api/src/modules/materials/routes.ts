@@ -80,7 +80,36 @@ materialsRouter.post(
     });
 
     if (!course) {
-      return res.status(404).json({ error: "course not found for your department" });
+      // Fallback: allow lookup by course code within user's college or school to accommodate code-only uploads
+      if (rawCourseCode) {
+        const byCollege = await prisma.course.findFirst({
+          where: {
+            code: rawCourseCode,
+            department: { collegeId: req.user!.collegeId }
+          },
+          select: { id: true }
+        });
+        if (byCollege) {
+          course = byCollege as any;
+        }
+      }
+    }
+
+    if (!course && rawCourseCode) {
+      const bySchool = await prisma.course.findFirst({
+        where: {
+          code: rawCourseCode,
+          department: { college: { schoolId: req.user!.schoolId } }
+        },
+        select: { id: true }
+      });
+      if (bySchool) {
+        course = bySchool as any;
+      }
+    }
+
+    if (!course) {
+      return res.status(404).json({ error: "course not found for your department or institution" });
     }
 
     await ensureBufferIsClean(req.file.buffer);
