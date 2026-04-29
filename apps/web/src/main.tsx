@@ -7,6 +7,7 @@ import { queryClient } from "@/queries/queryClient";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthBootstrap } from "@/hooks/useAuth";
 import { useRealtimeDataSync } from "@/hooks/useRealtimeDataSync";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ToastHost } from "@/components/ui/Toast";
 import "@/styles.css";
 
@@ -41,6 +42,7 @@ function Bootstrap() {
   useTheme();
   useAuthBootstrap();
   useRealtimeDataSync();
+  usePushNotifications();
   return (
     <>
       <App />

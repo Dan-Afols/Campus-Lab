@@ -53,8 +53,8 @@ export function FinanceDashboard() {
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           <Link to="/finance/log"><Button className="w-full">Log Expense</Button></Link>
-          <Link to="/finance/budget"><Button className="w-full">Budget Calculator</Button></Link>
-          <Link to="/finance/savings"><Button className="w-full">Savings Goals</Button></Link>
+          <Link to="/finance/budget"><Button className="w-full bg-electric-blue text-white hover:bg-electric-blue/90">Budget Calculator</Button></Link>
+          <Link to="/finance/savings"><Button className="w-full bg-electric-blue text-white hover:bg-electric-blue/90">Savings Goals</Button></Link>
         </div>
       </Card>
 

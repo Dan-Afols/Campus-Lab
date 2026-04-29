@@ -348,32 +348,44 @@ export function AcademicStructurePage() {
               {schools.map((school) => (
                 <div key={school.id} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/40">
                   <div className="flex items-center justify-between gap-3">
-                    {editingSchoolId === school.id ? (
-                      <Input value={editingSchoolName} onChange={(event) => setEditingSchoolName(event.target.value)} className="max-w-md" />
-                    ) : (
-                      <h3 className="text-base font-semibold text-slate-900 dark:text-white">{school.name}</h3>
-                    )}
+                    <h3 className="text-base font-semibold text-slate-900 dark:text-white">{school.name}</h3>
                     <div className="flex gap-2">
-                      {editingSchoolId === school.id ? (
-                        <>
-                          <Button type="button" variant="outline" size="sm" onClick={() => saveSchoolName(school.id)} disabled={submitting}>
-                            Save
-                          </Button>
-                          <Button type="button" variant="outline" size="sm" onClick={cancelEditSchool}>
-                            Cancel
-                          </Button>
-                        </>
-                      ) : (
-                        <Button type="button" variant="outline" size="sm" onClick={() => beginEditSchool(school)}>
-                          Edit
-                        </Button>
-                      )}
+                      <Button type="button" variant="outline" size="sm" onClick={() => addCollegeToSchool(school.id)}>
+                        <Plus className="mr-1 h-4 w-4" />
+                        Add College
+                      </Button>
+                      <Button type="button" variant="destructive" size="sm" onClick={() => deleteSchool(school.id, school.name)}>
+                        <Trash2 className="mr-1 h-4 w-4" />
+                        Delete
+                      </Button>
                     </div>
                   </div>
                   <div className="mt-3 space-y-3">
                     {school.colleges?.map((college) => (
-                      <div key={college.id}>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{college.name}</p>
+                      <div key={college.id} className="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-600 dark:bg-slate-800">
+                        <div className="flex items-center justify-between">
+                          {editingCollegeId === college.id ? (
+                            <Input value={editingCollegeName} onChange={(event) => setEditingCollegeName(event.target.value)} className="max-w-xs" />
+                          ) : (
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{college.name}</p>
+                          )}
+                          <div className="flex gap-1">
+                            {editingCollegeId === college.id ? (
+                              <>
+                                <Button type="button" variant="outline" size="sm" onClick={() => saveCollegeName(college.id)} disabled={submitting}>
+                                  Save
+                                </Button>
+                                <Button type="button" variant="outline" size="sm" onClick={() => setEditingCollegeId(null)}>
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : (
+                              <Button type="button" variant="outline" size="sm" onClick={() => beginEditCollege(college)}>
+                                Rename
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                           {(college.departments || []).map((department) => department.name).join(", ") || "No departments"}
                         </p>

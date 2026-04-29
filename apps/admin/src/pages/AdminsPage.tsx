@@ -8,13 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api";
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
 
 interface Admin {
   id: string;
@@ -229,16 +223,15 @@ export function AdminsPage() {
               {/* Admin Type Selection */}
               <div>
                 <Label htmlFor="adminType">Admin Type</Label>
-                <Select value={adminType} onValueChange={(value: any) => setAdminType(value)}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Select admin type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="global">Global Admin (All Access)</SelectItem>
-                    <SelectItem value="university">University Admin (School-specific)</SelectItem>
-                    <SelectItem value="college">College Admin (College-specific)</SelectItem>
-                    <SelectItem value="department">Department Admin (Department-specific)</SelectItem>
-                  </SelectContent>
+                <Select
+                  value={adminType}
+                  onChange={(e) => setAdminType(e.target.value as "global" | "university" | "college" | "department")}
+                  className="mt-2"
+                >
+                  <option value="global">Global Admin (All Access)</option>
+                  <option value="university">University Admin (School-specific)</option>
+                  <option value="college">College Admin (College-specific)</option>
+                  <option value="department">Department Admin (Department-specific)</option>
                 </Select>
               </div>
 
@@ -247,34 +240,34 @@ export function AdminsPage() {
                 <>
                   <div>
                     <Label htmlFor="school">Select School/University</Label>
-                    <Select value={formData.schoolId} onValueChange={handleSchoolChange}>
-                      <SelectTrigger className="mt-2">
-                        <SelectValue placeholder="Select a school" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {schools.map((school) => (
-                          <SelectItem key={school.id} value={school.id}>
-                            {school.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                    <Select
+                      value={formData.schoolId}
+                      onChange={(e) => void handleSchoolChange(e.target.value)}
+                      className="mt-2"
+                    >
+                      <option value="">Select a school</option>
+                      {schools.map((school) => (
+                        <option key={school.id} value={school.id}>
+                          {school.name}
+                        </option>
+                      ))}
                     </Select>
                   </div>
 
                   {adminType !== "university" && formData.schoolId && (
                     <div>
                       <Label htmlFor="college">Select College</Label>
-                      <Select value={formData.collegeId} onValueChange={handleCollegeChange}>
-                        <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Select a college" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {colleges.map((college) => (
-                            <SelectItem key={college.id} value={college.id}>
-                              {college.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
+                      <Select
+                        value={formData.collegeId}
+                        onChange={(e) => void handleCollegeChange(e.target.value)}
+                        className="mt-2"
+                      >
+                        <option value="">Select a college</option>
+                        {colleges.map((college) => (
+                          <option key={college.id} value={college.id}>
+                            {college.name}
+                          </option>
+                        ))}
                       </Select>
                     </div>
                   )}
@@ -282,17 +275,17 @@ export function AdminsPage() {
                   {adminType === "department" && formData.collegeId && (
                     <div>
                       <Label htmlFor="department">Select Department</Label>
-                      <Select value={formData.departmentId} onValueChange={(value) => setFormData({ ...formData, departmentId: value })}>
-                        <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Select a department" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {departments.map((dept) => (
-                            <SelectItem key={dept.id} value={dept.id}>
-                              {dept.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
+                      <Select
+                        value={formData.departmentId}
+                        onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
+                        className="mt-2"
+                      >
+                        <option value="">Select a department</option>
+                        {departments.map((dept) => (
+                          <option key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </option>
+                        ))}
                       </Select>
                     </div>
                   )}
