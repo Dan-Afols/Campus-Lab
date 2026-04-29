@@ -11,6 +11,7 @@ export const app = express();
 
 app.use(ngrokBypassMiddleware);
 app.use(helmet());
+app.set("trust proxy", 1);
 const explicitOrigins = new Set([
   env.APP_ORIGIN,
   "http://localhost:5173",
