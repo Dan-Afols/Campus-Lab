@@ -7,7 +7,7 @@ type ThemeState = {
   setTheme: (theme: ThemeMode) => void;
 };
 
-const initialTheme = (localStorage.getItem("theme") as ThemeMode | null) ?? "system";
+const initialTheme = (localStorage.getItem("theme") as ThemeMode | null) ?? "light";
 
 export const useThemeStore = create<ThemeState>((set) => ({
   theme: initialTheme,

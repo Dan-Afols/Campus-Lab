@@ -31,10 +31,7 @@ export function MaterialsList() {
   const queryClient = useQueryClient();
   const departmentName = typeof user?.department === "string" ? user.department : user?.department?.name;
 
-  const items = Array.isArray(data) && data.length ? data : [
-    { id: "1", type: "pdf", title: "Fluid Mechanics", courseCode: "MTH 301", date: "Today" },
-    { id: "2", type: "video", title: "Signals Revision", courseCode: "CPE 307", date: "Yesterday" }
-  ];
+  const items = Array.isArray(data) && data.length ? data : [];
 
   const iconByType = (type: string) => {
     const normalized = String(type || "").toLowerCase();
@@ -54,12 +51,14 @@ export function MaterialsList() {
     }
 
     setUploading(true);
-    try {
+      try {
       const uploadFormData = new FormData();
       uploadFormData.append("file", formData.file);
       uploadFormData.append("title", formData.title);
       uploadFormData.append("description", formData.description);
-      uploadFormData.append("courseId", formData.courseId);
+        // send both courseId (may be UUID) and courseCode (user-entered code)
+        uploadFormData.append("courseId", formData.courseId);
+        uploadFormData.append("courseCode", formData.courseId);
       uploadFormData.append("type", formData.type);
 
       await api.post("/materials/upload", uploadFormData, {

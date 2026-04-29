@@ -55,3 +55,27 @@ async def run_summary(text: str) -> str:
     async with queue_semaphore:
         snippet = text[:400]
         return await ask_grok(f"Summarize this for a university student in clear bullet points:\n\n{snippet}", settings.summary_model)
+
+
+async def run_meal_planner(budget: int, days: int, constraints: list[str]) -> str:
+    """Generate a meal plan for Nigerian university students based on budget, days, and dietary preferences."""
+    constraints_text = ", ".join(constraints) if constraints else "none"
+    
+    prompt = f"""Create a detailed {days}-day meal plan for a Nigerian university student with:
+- Budget: ₦{budget:,}
+- Dietary preferences/constraints: {constraints_text}
+
+Requirements:
+1. Use only Nigerian foods commonly available on university campuses (rice, beans, bread, plantains, eggs, tomatoes, onions, garlic, pepper, chicken, etc.)
+2. Include breakfast, lunch, and dinner for each day
+3. Make meals affordable and practical (no exotic ingredients)
+4. Ensure nutritional balance where possible
+5. Format as a structured meal plan with daily breakdowns
+6. Add estimated cost per day
+
+Popular Nigerian student meals to consider: Jollof rice, fried rice, pepper rice, tuwo, pounded yam, egusi soup, okra soup, bean soup, vegetable soup, akamu, bread and eggs, noodles, moi moi, akara, chin chin, etc.
+
+Please format the response with clear headings for each day and organized meal sections."""
+    
+    async with queue_semaphore:
+        return await ask_grok(prompt, settings.chat_model)

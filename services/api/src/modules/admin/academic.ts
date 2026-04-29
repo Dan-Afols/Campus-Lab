@@ -117,6 +117,35 @@ adminAcademicRouter.patch("/schools/:id", async (req, res) => {
 });
 
 /**
+ * DELETE /admin/academic/schools/:id
+ * Delete a school and its dependent data (if DB cascades are configured)
+ */
+adminAcademicRouter.delete("/schools/:id", async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+
+    // Attempt to delete school; if FK constraints prevent full cascade,
+    // let the error bubble so admin can inspect related records.
+    const deleted = await prisma.school.delete({ where: { id: schoolId } });
+
+    await prisma.auditLog.create({
+      data: {
+        actorUserId: req.user!.id,
+        action: "SCHOOL_DELETED",
+        resource: deleted.name,
+        metadata: { schoolId: deleted.id },
+        ipAddress: req.ip || "unknown",
+      },
+    });
+
+    return res.json({ message: "School deleted", school: deleted });
+  } catch (error) {
+    console.error("Delete school error:", error);
+    return res.status(500).json({ message: "Failed to delete school; check related records" });
+  }
+});
+
+/**
  * POST /admin/academic/structure
  * Create a new school with nested colleges and departments
  */

@@ -371,3 +371,79 @@ adminHostelRouter.get("/occupancy-report", async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 });
+
+/**
+ * DELETE /admin/hostel/:id
+ * Delete a hostel (with confirmation)
+ */
+adminHostelRouter.delete("/:id", async (req, res) => {
+  try {
+    const schema = z.object({
+      confirmed: z.boolean().refine((val) => val === true, {
+        message: "Must confirm deletion",
+      }),
+    });
+
+    const body = schema.parse(req.body);
+
+    // Check if hostel exists
+    const hostel = await prisma.hostel.findUnique({
+      where: { id: req.params.id },
+      include: {
+        rooms: {
+          include: {
+            beds: {
+              include: {
+                bookings: {
+                  where: { cancelledAt: null },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!hostel) {
+      return res.status(404).json({ message: "Hostel not found" });
+    }
+
+    // Check if there are active bookings
+    const activeBookings = hostel.rooms.flatMap((r) =>
+      r.beds.flatMap((b) => b.bookings)
+    );
+
+    if (activeBookings.length > 0) {
+      return res.status(400).json({
+        message: `Cannot delete hostel with ${activeBookings.length} active bookings. Please checkout all students first.`,
+      });
+    }
+
+    // Delete the hostel and cascade (via Prisma relations)
+    await prisma.$transaction([
+      prisma.hostel.delete({
+        where: { id: req.params.id },
+      }),
+      prisma.auditLog.create({
+        data: {
+          actorUserId: req.user!.id,
+          action: "HOSTEL_DELETED",
+          resource: req.params.id,
+          metadata: {
+            hostelName: hostel.name,
+            roomsCount: hostel.rooms.length,
+          },
+          ipAddress: req.ip || "unknown",
+        },
+      }),
+    ]);
+
+    return res.status(204).send();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: "Invalid input" });
+    }
+    console.error("Delete hostel error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});

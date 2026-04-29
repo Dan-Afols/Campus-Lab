@@ -16,6 +16,7 @@ const defaultSettings = {
   appVersion: "1.0.0",
   maintenanceMode: false,
   aiEnabled: true,
+  hostelEnabled: true,
   maxFileUploadSizeMB: 100,
   sessionTimeoutMinutes: 30,
   twoFactorRequired: true,
@@ -70,6 +71,7 @@ adminConfigRouter.patch("/settings", async (req, res) => {
     const schema = z.object({
       maintenanceMode: z.boolean().optional(),
       aiEnabled: z.boolean().optional(),
+      hostelEnabled: z.boolean().optional(),
       maxFileUploadSizeMB: z.number().min(1).max(500).optional(),
       sessionTimeoutMinutes: z.number().min(5).max(1440).optional(),
       twoFactorRequired: z.boolean().optional(),

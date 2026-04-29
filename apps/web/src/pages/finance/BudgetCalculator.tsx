@@ -7,11 +7,11 @@ import { useFinanceDashboardQuery } from "@/queries/useFinanceQueries";
 
 export function BudgetCalculator() {
   const { data: dashboard } = useFinanceDashboardQuery();
-  const [income, setIncome] = useState("50000");
-  const [rent, setRent] = useState("12000");
-  const [feeding, setFeeding] = useState("18000");
-  const [transport, setTransport] = useState("5000");
-  const [other, setOther] = useState("3000");
+  const [income, setIncome] = useState("12500");
+  const [rent, setRent] = useState("3000");
+  const [feeding, setFeeding] = useState("4500");
+  const [transport, setTransport] = useState("1250");
+  const [other, setOther] = useState("750");
 
   const incomeNum = Number(income || 0);
   const rentNum = Number(rent || 0);
@@ -26,44 +26,44 @@ export function BudgetCalculator() {
   const budgetHealth = remaining > spent ? "Good" : remaining > 0 ? "Caution" : "Exceeded";
 
   return (
-    <ScreenScaffold title="Budget Calculator" description="Estimate spending limits by period.">
+    <ScreenScaffold title="Budget Calculator" description="Estimate weekly spending limits.">
       <div className="space-y-3">
         <Card className="space-y-3">
-          <p className="text-body-sm text-dark-gray dark:text-mid-gray">Compare income, school costs, and monthly expenses before you spend.</p>
+          <p className="text-body-sm text-dark-gray dark:text-mid-gray">Compare income, school costs, and weekly expenses before you spend.</p>
           <Input 
-            label="Monthly income (₦)" 
+            label="Weekly income (₦)" 
             value={income} 
             onChange={(event) => setIncome(event.target.value)} 
             inputMode="decimal"
-            placeholder="e.g., 50000"
+            placeholder="e.g., 12500"
           />
           <Input 
-            label="Rent / accommodation (₦)" 
+            label="Rent / accommodation (₦) (weekly)" 
             value={rent} 
             onChange={(event) => setRent(event.target.value)} 
             inputMode="decimal"
-            placeholder="e.g., 12000"
+            placeholder="e.g., 3000"
           />
           <Input 
-            label="Feeding (₦)" 
+            label="Feeding (₦) (weekly)" 
             value={feeding} 
             onChange={(event) => setFeeding(event.target.value)} 
             inputMode="decimal"
-            placeholder="e.g., 18000"
+            placeholder="e.g., 4500"
           />
           <Input 
-            label="Transport (₦)" 
+            label="Transport (₦) (weekly)" 
             value={transport} 
             onChange={(event) => setTransport(event.target.value)} 
             inputMode="decimal"
-            placeholder="e.g., 5000"
+            placeholder="e.g., 1250"
           />
           <Input 
-            label="Other expenses (₦)" 
+            label="Other expenses (₦) (weekly)" 
             value={other} 
             onChange={(event) => setOther(event.target.value)} 
             inputMode="decimal"
-            placeholder="e.g., 3000"
+            placeholder="e.g., 750"
           />
         </Card>
 

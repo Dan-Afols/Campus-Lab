@@ -130,6 +130,69 @@ export function AcademicStructurePage() {
     }
   };
 
+  // College edit helpers (rename existing college)
+  const [editingCollegeId, setEditingCollegeId] = useState<string | null>(null);
+  const [editingCollegeName, setEditingCollegeName] = useState("");
+
+  const beginEditCollege = (college: College) => {
+    setEditingCollegeId(college.id);
+    setEditingCollegeName(college.name);
+    setError(null);
+    setSuccess(null);
+  };
+
+  const saveCollegeName = async (collegeId: string) => {
+    const normalized = editingCollegeName.trim();
+    if (!normalized) {
+      setError("College name is required.");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      await apiClient.patch(`/admin/academic/colleges/${collegeId}`, { name: normalized });
+      toast.success("College updated");
+      setSuccess("College updated successfully.");
+      setEditingCollegeId(null);
+      setEditingCollegeName("");
+      await loadSchools();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to update college");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const addCollegeToSchool = async (schoolId: string) => {
+    const name = window.prompt("New college name");
+    if (!name || !name.trim()) return;
+    try {
+      setSubmitting(true);
+      await apiClient.post(`/admin/academic/colleges`, { schoolId, name: name.trim() });
+      toast.success("College added");
+      await loadSchools();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to add college");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const deleteSchool = async (schoolId: string, schoolName: string) => {
+    if (!window.confirm(`Delete university "${schoolName}" and all related data? This cannot be undone.`)) return;
+    try {
+      setSubmitting(true);
+      await apiClient.delete(`/admin/academic/schools/${schoolId}`);
+      toast.success("University deleted");
+      await loadSchools();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete university. Check related records.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const resetForm = () => {
     setSchoolName("");
     setColleges([{ ...EMPTY_COLLEGE_DRAFT }]);

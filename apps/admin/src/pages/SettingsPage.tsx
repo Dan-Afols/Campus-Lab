@@ -40,6 +40,7 @@ export function SettingsPage() {
     appVersion: "1.0.0",
     maintenanceMode: false,
     aiEnabled: true,
+    hostelEnabled: true,
     maxFileUploadSizeMB: 100,
     sessionTimeoutMinutes: 30,
     twoFactorRequired: true,
@@ -74,12 +75,19 @@ export function SettingsPage() {
       setBackups(backupsRes.data || []);
     } catch (error) {
       console.error("Failed to fetch settings:", error);
-      setSettings(demoSettings);
-      setHealth(demoHealth);
-      setBackups([
-        { id: "backup_demo_1", createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), size: "142MB" },
-        { id: "backup_demo_2", createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(), size: "139MB" },
-      ]);
+      // In production do not silently show demo data — surface the error instead.
+      if (import.meta.env.MODE !== "production") {
+        setSettings(demoSettings);
+        setHealth(demoHealth);
+        setBackups([
+          { id: "backup_demo_1", createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), size: "142MB" },
+          { id: "backup_demo_2", createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(), size: "139MB" },
+        ]);
+      } else {
+        setSettings(null);
+        setHealth(null);
+        setBackups([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -94,6 +102,7 @@ export function SettingsPage() {
       await apiClient.patch("/admin/config/settings", {
         maintenanceMode: settings.maintenanceMode,
         aiEnabled: settings.aiEnabled,
+        hostelEnabled: settings.hostelEnabled,
         maxFileUploadSizeMB: settings.maxFileUploadSizeMB,
         sessionTimeoutMinutes: settings.sessionTimeoutMinutes,
         twoFactorRequired: settings.twoFactorRequired,
@@ -308,6 +317,10 @@ export function SettingsPage() {
               <label className="flex items-center justify-between">
                 <span>Email Notifications</span>
                 <input type="checkbox" checked={!!settings.emailNotificationsEnabled} onChange={(e) => setSettings({ ...settings, emailNotificationsEnabled: e.target.checked })} />
+              </label>
+              <label className="flex items-center justify-between">
+                <span>Hostel Service</span>
+                <input type="checkbox" checked={!!settings.hostelEnabled} onChange={(e) => setSettings({ ...settings, hostelEnabled: e.target.checked })} />
               </label>
               <label className="flex items-center justify-between">
                 <span>Push Notifications</span>

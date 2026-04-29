@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from app.core.settings import settings
-from app.models.inference import run_math, run_chat, run_summary
-from app.schemas.ai import PromptRequest, SummarizeRequest, AIResponse, SummaryResponse
+from app.models.inference import run_math, run_chat, run_summary, run_meal_planner
+from app.schemas.ai import PromptRequest, SummarizeRequest, AIResponse, SummaryResponse, MealPlannerRequest, MealPlanResponse
 
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
@@ -28,3 +28,9 @@ async def chat_endpoint(payload: PromptRequest) -> AIResponse:
 async def summarize_endpoint(payload: SummarizeRequest) -> SummaryResponse:
     summary = await run_summary(payload.text)
     return SummaryResponse(model=settings.summary_model, summary=summary)
+
+
+@router.post("/meal-planner", response_model=MealPlanResponse)
+async def meal_planner_endpoint(payload: MealPlannerRequest) -> MealPlanResponse:
+    meal_plan = await run_meal_planner(payload.budget, payload.days, payload.constraints)
+    return MealPlanResponse(model=settings.chat_model, meal_plan=meal_plan)

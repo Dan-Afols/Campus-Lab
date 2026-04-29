@@ -8,6 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Admin {
   id: string;
@@ -16,13 +23,49 @@ interface Admin {
   name?: string;
   status: string;
   createdAt: string;
+  adminRole?: string;
+  schoolId?: string;
+  collegeId?: string;
+  departmentId?: string;
+}
+
+interface School {
+  id: string;
+  name: string;
+  colleges?: College[];
+}
+
+interface College {
+  id: string;
+  name: string;
+  departments?: Department[];
+}
+
+interface Department {
+  id: string;
+  name: string;
 }
 
 export function AdminsPage() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formData, setFormData] = useState({ fullName: "", email: "", password: "" });
+  const [adminType, setAdminType] = useState<"global" | "university" | "college" | "department">("global");
+  const [schools, setSchools] = useState<School[]>([]);
+  const [colleges, setColleges] = useState<College[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    schoolId: "",
+    collegeId: "",
+    departmentId: "",
+  });
   const [creatingAdmin, setCreatingAdmin] = useState(false);
 
   const getErrorMessage = (error: any, fallback: string) => {
@@ -31,6 +74,7 @@ export function AdminsPage() {
 
   useEffect(() => {
     fetchAdmins();
+    fetchSchools();
   }, []);
 
   const fetchAdmins = async () => {
@@ -45,11 +89,40 @@ export function AdminsPage() {
     }
   };
 
+  const fetchSchools = async () => {
+    try {
+      const response = await apiClient.get<any>("/admin/academic/schools");
+      setSchools(response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch schools:", error);
+    }
+  };
+
+  const handleSchoolChange = async (schoolId: string) => {
+    setFormData({ ...formData, schoolId, collegeId: "", departmentId: "" });
+    if (schoolId) {
+      const school = schools.find((s) => s.id === schoolId);
+      if (school?.colleges) {
+        setColleges(school.colleges);
+      }
+    }
+  };
+
+  const handleCollegeChange = async (collegeId: string) => {
+    setFormData({ ...formData, collegeId, departmentId: "" });
+    if (collegeId) {
+      const college = colleges.find((c) => c.id === collegeId);
+      if (college?.departments) {
+        setDepartments(college.departments);
+      }
+    }
+  };
+
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.fullName || !formData.email || !formData.password) {
-      alert("Please fill all fields");
+      alert("Please fill all required fields");
       return;
     }
 
@@ -58,10 +131,53 @@ export function AdminsPage() {
       return;
     }
 
+    if (adminType !== "global" && !formData.schoolId) {
+      alert("Please select a school");
+      return;
+    }
+
+    if (adminType === "college" && !formData.collegeId) {
+      alert("Please select a college");
+      return;
+    }
+
+    if (adminType === "department" && !formData.departmentId) {
+      alert("Please select a department");
+      return;
+    }
+
     try {
       setCreatingAdmin(true);
-      await apiClient.post("/admin/users/admins", formData);
-      setFormData({ fullName: "", email: "", password: "" });
+      const payload: any = {
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+      };
+
+      if (formData.phoneNumber) payload.phoneNumber = formData.phoneNumber;
+      if (formData.emergencyContactName) payload.emergencyContactName = formData.emergencyContactName;
+      if (formData.emergencyContactPhone) payload.emergencyContactPhone = formData.emergencyContactPhone;
+
+      if (adminType === "university") {
+        payload.schoolId = formData.schoolId;
+      } else if (adminType === "college") {
+        payload.collegeId = formData.collegeId;
+      } else if (adminType === "department") {
+        payload.departmentId = formData.departmentId;
+      }
+
+      await apiClient.post("/admin/users/admins", payload);
+      setFormData({
+        fullName: "",
+        email: "",
+        password: "",
+        phoneNumber: "",
+        emergencyContactName: "",
+        emergencyContactPhone: "",
+        schoolId: "",
+        collegeId: "",
+        departmentId: "",
+      });
       setShowCreateForm(false);
       alert("Admin created successfully");
       fetchAdmins();
@@ -106,11 +222,85 @@ export function AdminsPage() {
         <Card className="border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20">
           <CardHeader>
             <CardTitle className="text-lg">Create New Admin Account</CardTitle>
+            <CardDescription>Create a new admin with optional scope restrictions</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreateAdmin} className="space-y-4">
+              {/* Admin Type Selection */}
               <div>
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="adminType">Admin Type</Label>
+                <Select value={adminType} onValueChange={(value: any) => setAdminType(value)}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Select admin type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="global">Global Admin (All Access)</SelectItem>
+                    <SelectItem value="university">University Admin (School-specific)</SelectItem>
+                    <SelectItem value="college">College Admin (College-specific)</SelectItem>
+                    <SelectItem value="department">Department Admin (Department-specific)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Scope Selection */}
+              {adminType !== "global" && (
+                <>
+                  <div>
+                    <Label htmlFor="school">Select School/University</Label>
+                    <Select value={formData.schoolId} onValueChange={handleSchoolChange}>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Select a school" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {schools.map((school) => (
+                          <SelectItem key={school.id} value={school.id}>
+                            {school.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {adminType !== "university" && formData.schoolId && (
+                    <div>
+                      <Label htmlFor="college">Select College</Label>
+                      <Select value={formData.collegeId} onValueChange={handleCollegeChange}>
+                        <SelectTrigger className="mt-2">
+                          <SelectValue placeholder="Select a college" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {colleges.map((college) => (
+                            <SelectItem key={college.id} value={college.id}>
+                              {college.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {adminType === "department" && formData.collegeId && (
+                    <div>
+                      <Label htmlFor="department">Select Department</Label>
+                      <Select value={formData.departmentId} onValueChange={(value) => setFormData({ ...formData, departmentId: value })}>
+                        <SelectTrigger className="mt-2">
+                          <SelectValue placeholder="Select a department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept.id} value={dept.id}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div>
+                <Label htmlFor="name">Full Name *</Label>
                 <Input
                   id="name"
                   value={formData.fullName}
@@ -121,7 +311,7 @@ export function AdminsPage() {
               </div>
 
               <div>
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">Email Address *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -133,7 +323,7 @@ export function AdminsPage() {
               </div>
 
               <div>
-                <Label htmlFor="password">Temporary Password (min 12 chars)</Label>
+                <Label htmlFor="password">Temporary Password (min 12 chars) *</Label>
                 <Input
                   id="password"
                   type="password"
@@ -145,6 +335,41 @@ export function AdminsPage() {
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                   Admin must set up 2FA on first login
                 </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phoneNumber}
+                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                    placeholder="08012345678"
+                    className="mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="emergency">Emergency Contact Name</Label>
+                  <Input
+                    id="emergency"
+                    value={formData.emergencyContactName}
+                    onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                    placeholder="Contact Name"
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="emergencyPhone">Emergency Contact Phone</Label>
+                <Input
+                  id="emergencyPhone"
+                  value={formData.emergencyContactPhone}
+                  onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
+                  placeholder="08012345678"
+                  className="mt-2"
+                />
               </div>
 
               <div className="flex gap-2">
@@ -186,6 +411,7 @@ export function AdminsPage() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -196,6 +422,11 @@ export function AdminsPage() {
                     <TableRow key={admin.id}>
                       <TableCell className="font-medium">{admin.fullName || admin.name}</TableCell>
                       <TableCell>{admin.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {admin.adminRole || "SUPER_ADMIN"}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={admin.status === "ACTIVE" ? "success" : "destructive"}>
                           {admin.status}

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/api";
-import { Loader2, Home, PlusCircle } from "lucide-react";
+import { Loader2, Home, PlusCircle, Trash2 } from "lucide-react";
 
 type Hostel = {
   id: string;
@@ -82,6 +82,23 @@ export function HostelSetupPage() {
     }
   };
 
+  const deleteHostel = async (hostelId: string, hostelName: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${hostelName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(`/admin/hostel/${hostelId}`, {
+        data: { confirmed: true },
+      });
+      setHostels((prev) => prev.filter((h) => h.id !== hostelId));
+      alert("Hostel deleted successfully");
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || "Failed to delete hostel";
+      alert(errorMsg);
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-72"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   }
@@ -155,7 +172,17 @@ export function HostelSetupPage() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2"><Home className="w-4 h-4" />{h.name}</span>
-                <Badge variant={h.gender === "MALE" ? "default" : "secondary"}>{h.gender}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={h.gender === "MALE" ? "default" : "secondary"}>{h.gender}</Badge>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => deleteHostel(h.id, h.name)}
+                    title="Delete hostel"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </CardTitle>
               <CardDescription>{h.distanceKm}km from campus center</CardDescription>
             </CardHeader>

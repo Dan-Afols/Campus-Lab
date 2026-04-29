@@ -33,7 +33,6 @@ const LogExpense = lazy(() => import("@/pages/finance/LogExpense").then((m) => (
 const ExpenseHistory = lazy(() => import("@/pages/finance/ExpenseHistory").then((m) => ({ default: m.ExpenseHistory })));
 const SavingsGoals = lazy(() => import("@/pages/finance/SavingsGoals").then((m) => ({ default: m.SavingsGoals })));
 const BudgetCalculator = lazy(() => import("@/pages/finance/BudgetCalculator").then((m) => ({ default: m.BudgetCalculator })));
-const AIMealPlanner = lazy(() => import("@/pages/finance/AIMealPlanner").then((m) => ({ default: m.AIMealPlanner })));
 const HealthDashboard = lazy(() => import("@/pages/health/HealthDashboard").then((m) => ({ default: m.HealthDashboard })));
 const StepCounter = lazy(() => import("@/pages/health/StepCounter").then((m) => ({ default: m.StepCounter })));
 const WaterTracker = lazy(() => import("@/pages/health/WaterTracker").then((m) => ({ default: m.WaterTracker })));
@@ -85,7 +84,7 @@ function RouteShell() {
               <Route path="/finance/history" element={<ExpenseHistory />} />
               <Route path="/finance/savings" element={<SavingsGoals />} />
               <Route path="/finance/budget" element={<BudgetCalculator />} />
-              <Route path="/finance/meal-planner" element={<AIMealPlanner />} />
+              {/* AI Meal Planner removed per product request */}
               <Route path="/health" element={<HealthDashboard />} />
               <Route path="/health/steps" element={<StepCounter />} />
               <Route path="/health/water" element={<WaterTracker />} />

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { MathRenderer } from "@/components/ui/MathRenderer";
+import { RichTextRenderer } from "@/components/ui/RichTextRenderer";
 import { useVirtualViewport } from "@/hooks/useVirtualViewport";
 import api from "@/services/api";
 
@@ -94,7 +95,11 @@ export function AIAssistant() {
                 <MathRenderer expression="x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}" />
               </div>
             ) : null}
-            <p className="whitespace-pre-wrap text-body-sm">{message.text}</p>
+            {message.role === "assistant" ? (
+              <RichTextRenderer content={message.text} className="text-body-sm" />
+            ) : (
+              <p className="whitespace-pre-wrap text-body-sm">{message.text}</p>
+            )}
           </div>
         ))}
         </div>
