@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api";
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import { Select } from "@/components/ui/select";
 
 interface Admin {
   id: string;
@@ -223,16 +222,17 @@ export function AdminsPage() {
               {/* Admin Type Selection */}
               <div>
                 <Label htmlFor="adminType">Admin Type</Label>
-                <Select
+                <select
+                  id="adminType"
                   value={adminType}
                   onChange={(e) => setAdminType(e.target.value as "global" | "university" | "college" | "department")}
-                  className="mt-2"
+                  className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="global">Global Admin (All Access)</option>
                   <option value="university">University Admin (School-specific)</option>
                   <option value="college">College Admin (College-specific)</option>
                   <option value="department">Department Admin (Department-specific)</option>
-                </Select>
+                </select>
               </div>
 
               {/* Scope Selection */}
@@ -240,10 +240,11 @@ export function AdminsPage() {
                 <>
                   <div>
                     <Label htmlFor="school">Select School/University</Label>
-                    <Select
+                    <select
+                      id="school"
                       value={formData.schoolId}
                       onChange={(e) => void handleSchoolChange(e.target.value)}
-                      className="mt-2"
+                      className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="">Select a school</option>
                       {schools.map((school) => (
@@ -251,16 +252,17 @@ export function AdminsPage() {
                           {school.name}
                         </option>
                       ))}
-                    </Select>
+                    </select>
                   </div>
 
                   {adminType !== "university" && formData.schoolId && (
                     <div>
                       <Label htmlFor="college">Select College</Label>
-                      <Select
+                      <select
+                        id="college"
                         value={formData.collegeId}
                         onChange={(e) => void handleCollegeChange(e.target.value)}
-                        className="mt-2"
+                        className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <option value="">Select a college</option>
                         {colleges.map((college) => (
@@ -268,17 +270,18 @@ export function AdminsPage() {
                             {college.name}
                           </option>
                         ))}
-                      </Select>
+                      </select>
                     </div>
                   )}
 
                   {adminType === "department" && formData.collegeId && (
                     <div>
                       <Label htmlFor="department">Select Department</Label>
-                      <Select
+                      <select
+                        id="department"
                         value={formData.departmentId}
                         onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                        className="mt-2"
+                        className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <option value="">Select a department</option>
                         {departments.map((dept) => (
@@ -286,7 +289,7 @@ export function AdminsPage() {
                             {dept.name}
                           </option>
                         ))}
-                      </Select>
+                      </select>
                     </div>
                   )}
                 </>
