@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import { sanitizeText } from "@/utils/sanitizeInputs";
 
 type Department = {
   id: string;
@@ -109,7 +110,7 @@ export function AcademicStructurePage() {
   };
 
   const saveSchoolName = async (schoolId: string) => {
-    const normalizedName = editingSchoolName.trim();
+    const normalizedName = sanitizeText(editingSchoolName).trim();
     if (!normalizedName) {
       setError("University name is required.");
       return;
@@ -142,7 +143,7 @@ export function AcademicStructurePage() {
   };
 
   const saveCollegeName = async (collegeId: string) => {
-    const normalized = editingCollegeName.trim();
+    const normalized = sanitizeText(editingCollegeName).trim();
     if (!normalized) {
       setError("College name is required.");
       return;
@@ -203,7 +204,7 @@ export function AcademicStructurePage() {
     setError(null);
     setSuccess(null);
 
-    const normalizedSchoolName = schoolName.trim();
+    const normalizedSchoolName = sanitizeText(schoolName).trim();
     if (!normalizedSchoolName) {
       setError("University name is required.");
       return;
@@ -211,10 +212,10 @@ export function AcademicStructurePage() {
 
     const normalizedColleges = colleges
       .map((entry) => ({
-        name: entry.name.trim(),
+        name: sanitizeText(entry.name).trim(),
         departments: entry.departmentsText
           .split("\n")
-          .map((department) => department.trim())
+          .map((department) => sanitizeText(department).trim())
           .filter(Boolean)
       }))
       .filter((entry) => entry.name.length > 0);

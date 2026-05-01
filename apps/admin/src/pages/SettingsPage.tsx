@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save, Download, AlertTriangle } from "lucide-react";
 import { apiClient } from "@/lib/api";
+import { sanitizeText, sanitizeNumber, sanitizeFormData } from "@/utils/sanitizeInputs";
 
 interface SystemHealth {
   status: string;
@@ -100,16 +101,18 @@ export function SettingsPage() {
     }
     try {
       setSaving(true);
-      await apiClient.patch("/admin/config/settings", {
-        maintenanceMode: settings.maintenanceMode,
-        aiEnabled: settings.aiEnabled,
-        hostelEnabled: settings.hostelEnabled,
-        maxFileUploadSizeMB: settings.maxFileUploadSizeMB,
-        sessionTimeoutMinutes: settings.sessionTimeoutMinutes,
-        twoFactorRequired: settings.twoFactorRequired,
-        emailNotificationsEnabled: settings.emailNotificationsEnabled,
-        pushNotificationsEnabled: settings.pushNotificationsEnabled,
-      });
+      // Sanitize all input before sending to API
+      const sanitizedData = {
+        maintenanceMode: Boolean(settings.maintenanceMode),
+        aiEnabled: Boolean(settings.aiEnabled),
+        hostelEnabled: Boolean(settings.hostelEnabled),
+        maxFileUploadSizeMB: sanitizeNumber(settings.maxFileUploadSizeMB),
+        sessionTimeoutMinutes: sanitizeNumber(settings.sessionTimeoutMinutes),
+        twoFactorRequired: Boolean(settings.twoFactorRequired),
+        emailNotificationsEnabled: Boolean(settings.emailNotificationsEnabled),
+        pushNotificationsEnabled: Boolean(settings.pushNotificationsEnabled),
+      };
+      await apiClient.patch("/admin/config/settings", sanitizedData);
       alert("Settings saved successfully");
     } catch {
       alert("Settings saved in demo mode (offline fallback)");
@@ -154,13 +157,13 @@ export function SettingsPage() {
     try {
       setTestingSmtp(true);
       const payload: Record<string, any> = {
-        host: smtpForm.host?.trim() || undefined,
-        port: Number(smtpForm.port) || undefined,
-        secure: smtpForm.secure,
-        user: smtpForm.user?.trim() || undefined,
-        pass: smtpForm.pass?.trim() || undefined,
-        from: smtpForm.from?.trim() || undefined,
-        to: smtpForm.to?.trim() || undefined,
+        host: sanitizeText(smtpForm.host)?.trim() || undefined,
+        port: sanitizeNumber(smtpForm.port) || undefined,
+        secure: Boolean(smtpForm.secure),
+        user: sanitizeText(smtpForm.user)?.trim() || undefined,
+        pass: sanitizeText(smtpForm.pass)?.trim() || undefined,
+        from: sanitizeText(smtpForm.from)?.trim() || undefined,
+        to: sanitizeText(smtpForm.to)?.trim() || undefined,
       };
 
       await apiClient.post("/admin/config/smtp/test", payload);
@@ -176,8 +179,9 @@ export function SettingsPage() {
   const handleEnvSmtpTest = async () => {
     try {
       setTestingSmtp(true);
+      const sanitizedEmail = sanitizeText(smtpForm.to)?.trim();
       await apiClient.post("/admin/config/smtp/test", {
-        to: smtpForm.to?.trim() || undefined,
+        to: sanitizedEmail || undefined,
       });
       alert("SMTP verified successfully using backend .env credentials");
     } catch (error) {

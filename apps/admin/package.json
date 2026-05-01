@@ -47,7 +47,8 @@
     "@tiptap/extension-image": "^2.1.13",
     "@tiptap/extension-list-item": "^2.1.13",
     "react-pdf": "^7.5.0",
-    "framer-motion": "^10.16.16"
+    "framer-motion": "^10.16.16",
+    "dompurify": "^3.2.6"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
