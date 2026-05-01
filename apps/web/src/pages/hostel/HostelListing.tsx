@@ -15,10 +15,11 @@ export function HostelListing() {
     let mounted = true;
     (async () => {
       try {
-        const res = await api.get<any>("/admin/config/settings");
+        const res = await api.get<any>("/config/features");
         if (!mounted) return;
         setHostelEnabled(res.data?.hostelEnabled ?? true);
       } catch (e) {
+        // If endpoint fails, default to enabled
         setHostelEnabled(true);
       }
     })();

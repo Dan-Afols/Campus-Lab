@@ -7,6 +7,33 @@ import { redis } from "../../common/lib/redis.js";
 
 const router = Router();
 const CONFIG_FILE = path.join(process.cwd(), "ngrok-config.json");
+const SETTINGS_FILE = path.join(process.cwd(), "data", "system-settings.json");
+
+const defaultSettings = {
+  appName: "CampusLab",
+  appVersion: "1.0.0",
+  maintenanceMode: false,
+  aiEnabled: true,
+  hostelEnabled: true,
+  maxFileUploadSizeMB: 100,
+  sessionTimeoutMinutes: 30,
+  twoFactorRequired: true,
+  emailNotificationsEnabled: true,
+  pushNotificationsEnabled: true,
+};
+
+function readSettings() {
+  try {
+    if (!fs.existsSync(SETTINGS_FILE)) {
+      return defaultSettings;
+    }
+    const raw = fs.readFileSync(SETTINGS_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    return { ...defaultSettings, ...parsed };
+  } catch {
+    return defaultSettings;
+  }
+}
 
 type NgrokConfig = {
   ngrokUrl: string;
@@ -103,6 +130,20 @@ router.get("/api/config", (_req, res) => {
     apiUrl: config?.ngrokUrl ?? fallbackApiUrl(),
     updatedAt: config?.updatedAt ?? new Date().toISOString(),
     environment: env.NODE_ENV
+  });
+});
+
+/**
+ * PUBLIC ENDPOINT: GET /api/v1/config/features
+ * Get public feature flags (no authentication required)
+ */
+router.get("/api/v1/config/features", (_req, res) => {
+  const settings = readSettings();
+  res.setHeader("Cache-Control", "public, max-age=300");
+  return res.json({
+    hostelEnabled: settings.hostelEnabled ?? true,
+    aiEnabled: settings.aiEnabled ?? true,
+    maintenanceMode: settings.maintenanceMode ?? false,
   });
 });
 

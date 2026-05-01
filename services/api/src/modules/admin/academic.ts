@@ -489,11 +489,20 @@ adminAcademicRouter.post("/courses", async (req, res) => {
       departmentId: z.string().min(1),
       code: z.string().min(2).max(20),
       name: z.string().min(2),
-      creditHours: z.number().min(0).max(6),
-      level: z.number().min(100).max(900),
+      creditHours: z.number().min(0).max(6).optional(),
+      level: z.number().min(100).max(900).optional(),
     });
 
     const body = schema.parse(req.body);
+
+    // Verify department exists
+    const department = await prisma.department.findUnique({
+      where: { id: body.departmentId }
+    });
+
+    if (!department) {
+      return res.status(404).json({ message: "Department not found" });
+    }
 
     const course = await prisma.$transaction([
       prisma.course.create({
@@ -513,13 +522,18 @@ adminAcademicRouter.post("/courses", async (req, res) => {
       }),
     ]);
 
+    emitRealtimeEvent({ channel: "courses", action: "created", entityId: course[0].id });
     return res.status(201).json(course[0]);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid input" });
+      return res.status(400).json({ message: "Invalid input", errors: error.errors });
+    }
+    // Handle unique constraint violation
+    if (error instanceof Error && error.message.includes("Unique constraint")) {
+      return res.status(409).json({ message: "A course with this code already exists in this department" });
     }
     console.error("Create course error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error", error: error instanceof Error ? error.message : "Unknown error" });
   }
 });
 
