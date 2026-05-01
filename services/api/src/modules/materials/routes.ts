@@ -54,34 +54,34 @@ materialsRouter.post(
   requireRole(UserRole.COURSE_REP, UserRole.ADMIN),
   upload.single("file"),
   async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "file is required" });
-      }
+    if (!req.file) {
+      return res.status(400).json({ error: "file is required" });
+    }
 
-      const { title, description, type } = req.body;
-      const rawCourseId = typeof req.body.courseId === "string" ? req.body.courseId.trim() : "";
-      const rawCourseCode = typeof req.body.courseCode === "string" ? req.body.courseCode.trim().toUpperCase() : "";
-      const fileType = String(type);
-      const resourceType = fileType === "MP4" ? "video" : "raw";
+    const { title, description, type } = req.body;
+    const rawCourseId = typeof req.body.courseId === "string" ? req.body.courseId.trim() : "";
+    const rawCourseCode = typeof req.body.courseCode === "string" ? req.body.courseCode.trim().toUpperCase() : "";
+    const fileType = String(type);
+    const resourceType = fileType === "MP4" ? "video" : "raw";
 
-      if (!title || !type || (!rawCourseId && !rawCourseCode)) {
-        return res.status(400).json({ error: "title, type, and either courseId or courseCode are required" });
-      }
+    if (!title || !type || (!rawCourseId && !rawCourseCode)) {
+      return res.status(400).json({ error: "title, type, and either courseId or courseCode are required" });
+    }
 
-      let course = await prisma.course.findFirst({
-        where: {
-          departmentId: req.user!.departmentId,
-          OR: [
-            { id: rawCourseId || undefined },
-            { code: rawCourseCode || undefined },
-          ],
-        },
-        select: { id: true },
-      });
+    let course = await prisma.course.findFirst({
+      where: {
+        departmentId: req.user!.departmentId,
+        OR: [
+          { id: rawCourseId || undefined },
+          { code: rawCourseCode || undefined },
+        ],
+      },
+      select: { id: true },
+    });
 
-      if (!course && rawCourseCode) {
-        // Fallback: allow lookup by course code within the user's college or school to accommodate code-only uploads.
+    if (!course) {
+      // Fallback: allow lookup by course code within user's college or school to accommodate code-only uploads
+      if (rawCourseCode) {
         const byCollege = await prisma.course.findFirst({
           where: {
             code: rawCourseCode,
@@ -93,59 +93,54 @@ materialsRouter.post(
           course = byCollege as any;
         }
       }
-
-      if (!course && rawCourseCode) {
-        const bySchool = await prisma.course.findFirst({
-          where: {
-            code: rawCourseCode,
-            department: { college: { schoolId: req.user!.schoolId } }
-          },
-          select: { id: true }
-        });
-        if (bySchool) {
-          course = bySchool as any;
-        }
-      }
-
-      if (!course) {
-        return res.status(404).json({ error: "course not found for your department or institution" });
-      }
-
-      await ensureBufferIsClean(req.file.buffer);
-
-      const uploaded = await uploadToCloudinary(req.file.buffer, "campus-lab/materials", resourceType);
-
-      const created = await prisma.material.create({
-        data: {
-          title,
-          description,
-          courseId: course.id,
-          type,
-          departmentId: req.user!.departmentId,
-          departmentLevelId: req.user!.departmentLevelId,
-          uploadedById: req.user!.id,
-          fileUrl: uploaded.secure_url,
-          approvedByAdmin: req.user!.role === "ADMIN"
-        }
-      });
-
-      if (["PDF", "DOC", "DOCX"].includes(fileType)) {
-        void enqueueMaterialSummary(created.id, req.file.buffer.toString("utf8")).catch((error) => {
-          console.warn("Material summary queue unavailable; upload completed without summary:", (error as Error).message);
-        });
-      }
-
-      emitRealtimeEvent({
-        channel: "materials",
-        action: "created",
-        entityId: created.id
-      });
-
-      return res.status(201).json(created);
-    } catch (error) {
-      console.error("Material upload error:", error);
-      return res.status(500).json({ error: "Failed to upload material" });
     }
+
+    if (!course && rawCourseCode) {
+      const bySchool = await prisma.course.findFirst({
+        where: {
+          code: rawCourseCode,
+          department: { college: { schoolId: req.user!.schoolId } }
+        },
+        select: { id: true }
+      });
+      if (bySchool) {
+        course = bySchool as any;
+      }
+    }
+
+    if (!course) {
+      return res.status(404).json({ error: "course not found for your department or institution" });
+    }
+
+    await ensureBufferIsClean(req.file.buffer);
+
+    const uploaded = await uploadToCloudinary(req.file.buffer, "campus-lab/materials", resourceType);
+
+    const created = await prisma.material.create({
+      data: {
+        title,
+        description,
+        courseId: course.id,
+        type,
+        departmentId: req.user!.departmentId,
+        departmentLevelId: req.user!.departmentLevelId,
+        uploadedById: req.user!.id,
+        fileUrl: uploaded.secure_url,
+        approvedByAdmin: req.user!.role === "ADMIN"
+      }
+    });
+
+    if (["PDF", "DOC", "DOCX"].includes(fileType)) {
+      await enqueueMaterialSummary(created.id, req.file.buffer.toString("utf8"));
+    }
+
+    emitRealtimeEvent({
+      channel: "materials",
+      action: "created",
+      entityId: created.id
+    });
+
+    return res.status(201).json(created);
   }
 );
 
