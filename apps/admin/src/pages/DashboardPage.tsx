@@ -80,7 +80,7 @@ export function DashboardPage() {
         const [studentsRes, coursesRes, materialsRes, hostelRes, newsRes] = await Promise.all([
           apiClient.get("/admin/users/students?limit=1").catch(() => ({ data: [] })),
           apiClient.get("/admin/academic/courses").catch(() => ({ data: [] })),
-          apiClient.get("/admin/materials").catch(() => ({ data: [] })),
+          apiClient.get("/admin/academic/materials").catch(() => ({ data: [] })),
           apiClient.get("/admin/hostel/occupancy-report").catch(() => ({ data: null })),
           apiClient.get("/admin/news/posts").catch(() => ({ data: [] })),
         ]);

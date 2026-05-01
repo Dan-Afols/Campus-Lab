@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { apiClient } from "@/lib/api";
 import { Loader2, CheckCircle, XCircle, Eye } from "lucide-react";
@@ -266,11 +265,11 @@ export function CourseMaterialsPage() {
               </div>
               <div>
                 <Label htmlFor="schoolId">University</Label>
-                <Select
+                <select
                   id="schoolId"
                   value={uploadForm.schoolId}
                   onChange={(e) => handleSchoolChange(e.target.value)}
-                  className="mt-2"
+                  className="mt-2 h-10 w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 >
                   <option value="">Select university...</option>
                   {schools.map((school) => (
@@ -278,18 +277,18 @@ export function CourseMaterialsPage() {
                       {school.name}
                     </option>
                   ))}
-                </Select>
+                </select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="collegeId">College</Label>
-                <Select
+                <select
                   id="collegeId"
                   value={uploadForm.collegeId}
                   onChange={(e) => handleCollegeChange(e.target.value)}
-                  className="mt-2"
+                  className="mt-2 h-10 w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50"
                   disabled={!uploadForm.schoolId}
                 >
                   <option value="">Select college...</option>
@@ -298,15 +297,15 @@ export function CourseMaterialsPage() {
                       {college.name}
                     </option>
                   ))}
-                </Select>
+                </select>
               </div>
               <div>
                 <Label htmlFor="departmentId">Department</Label>
-                <Select
+                <select
                   id="departmentId"
                   value={uploadForm.departmentId}
                   onChange={(e) => handleDepartmentChange(e.target.value)}
-                  className="mt-2"
+                  className="mt-2 h-10 w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50"
                   disabled={!uploadForm.collegeId}
                 >
                   <option value="">Select department...</option>
@@ -315,17 +314,17 @@ export function CourseMaterialsPage() {
                       {department.name}
                     </option>
                   ))}
-                </Select>
+                </select>
               </div>
             </div>
 
             <div>
               <Label htmlFor="courseId">Course</Label>
-              <Select
+              <select
                 id="courseId"
                 value={uploadForm.courseId}
                 onChange={(e) => setUploadForm({ ...uploadForm, courseId: e.target.value })}
-                className="mt-2"
+                className="mt-2 h-10 w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-50"
                 disabled={!uploadForm.departmentId}
               >
                 <option value="">Select course...</option>
@@ -334,7 +333,7 @@ export function CourseMaterialsPage() {
                     {course.code} - {course.name || course.title}
                   </option>
                 ))}
-              </Select>
+              </select>
             </div>
 
             <div>
@@ -351,11 +350,11 @@ export function CourseMaterialsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="type">Type</Label>
-                <Select
+                <select
                   id="type"
                   value={uploadForm.type}
                   onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value })}
-                  className="mt-2"
+                  className="mt-2 h-10 w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 >
                   <option value="PDF">PDF</option>
                   <option value="DOC">DOC</option>
@@ -363,7 +362,7 @@ export function CourseMaterialsPage() {
                   <option value="MP4">MP4</option>
                   <option value="MP3">MP3</option>
                   <option value="WAV">WAV</option>
-                </Select>
+                </select>
               </div>
               <div>
                 <Label htmlFor="file">File</Label>

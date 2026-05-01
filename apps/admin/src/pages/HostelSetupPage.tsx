@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/api";
 import { Loader2, Home, PlusCircle, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 type Hostel = {
   id: string;
@@ -27,6 +28,8 @@ export function HostelSetupPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [hostels, setHostels] = useState<Hostel[]>([]);
+  const [hostelEnabled, setHostelEnabled] = useState(true);
+  const [savingConfig, setSavingConfig] = useState(false);
   const [form, setForm] = useState({
     name: "",
     gender: "MALE",
@@ -44,9 +47,15 @@ export function HostelSetupPage() {
   useEffect(() => {
     const load = async () => {
       try {
+        // Load hostel config
+        const configRes = await apiClient.get("/admin/config/settings").catch(() => ({ data: { hostelEnabled: true } }));
+        setHostelEnabled(configRes.data?.hostelEnabled ?? true);
+
+        // Load hostels
         const res = await apiClient.get<Hostel[]>("/admin/hostel/all");
         setHostels(Array.isArray(res.data) && res.data.length > 0 ? res.data : demoHostels);
       } catch {
+        setHostelEnabled(true);
         setHostels(demoHostels);
       } finally {
         setLoading(false);
@@ -99,6 +108,18 @@ export function HostelSetupPage() {
     }
   };
 
+  const saveHostelConfig = async () => {
+    try {
+      setSavingConfig(true);
+      await apiClient.patch("/admin/config/settings", { hostelEnabled });
+      toast.success("Hostel setting updated successfully");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to update hostel setting");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-72"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   }
@@ -109,6 +130,45 @@ export function HostelSetupPage() {
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Hostel Setup</h1>
         <p className="text-slate-600 dark:text-slate-400 mt-2">Create hostels and monitor capacity at a glance.</p>
       </div>
+
+      <Card className="border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20">
+        <CardHeader>
+          <CardTitle>Hostel Service Control</CardTitle>
+          <CardDescription>Enable or disable the hostel feature for students</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="hostelToggle" className="text-base font-semibold">
+                {hostelEnabled ? "✓ Hostel Service Active" : "✗ Hostel Service Disabled"}
+              </Label>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                {hostelEnabled 
+                  ? "Students can view and book hostel rooms" 
+                  : "Students will see a 'Coming Soon' message for hostel feature"}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                id="hostelToggle"
+                type="checkbox"
+                checked={hostelEnabled}
+                onChange={(e) => setHostelEnabled(e.target.checked)}
+                className="w-6 h-6 rounded border-slate-300"
+              />
+              <Button
+                onClick={saveHostelConfig}
+                disabled={savingConfig}
+                variant="default"
+                size="sm"
+              >
+                {savingConfig && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Save
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
