@@ -522,7 +522,6 @@ adminAcademicRouter.post("/courses", async (req, res) => {
       }),
     ]);
 
-    emitRealtimeEvent({ channel: "courses", action: "created", entityId: course[0].id });
     return res.status(201).json(course[0]);
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -1,6 +1,6 @@
 import type { Response } from "express";
 
-export type RealtimeChannel = "news" | "materials" | "past-questions" | "timetable" | "notifications";
+export type RealtimeChannel = "news" | "materials" | "past-questions" | "timetable" | "notifications" | "courses";
 
 export type RealtimePayload = {
   channel: RealtimeChannel;
